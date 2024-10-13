@@ -1,5 +1,5 @@
 use futures_channel::mpsc;
-use futures_util::StreamExt;
+use futures_lite::StreamExt as _;
 use std::any::Any;
 use std::mem;
 use std::sync::OnceLock;

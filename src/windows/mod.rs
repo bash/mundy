@@ -11,9 +11,7 @@ use crate::{AccentColor, Srgba};
 use crate::{AvailablePreferences, Interest};
 use com_thread::ComThreadGuard;
 use futures_channel::mpsc;
-use futures_core::stream::BoxStream;
-use futures_core::Stream;
-use futures_util::StreamExt as _;
+use futures_lite::{stream, Stream, StreamExt as _};
 use hook::{register_windows_hook, WindowsHookGuard};
 use pin_project_lite::pin_project;
 use std::sync::mpsc as std_mpsc;
@@ -41,7 +39,7 @@ mod main_thread;
 pin_project! {
     pub(crate) struct PreferencesStream {
         _shutdown: Shutdown,
-        #[pin] inner: BoxStream<'static, AvailablePreferences>,
+        #[pin] inner: stream::Boxed<AvailablePreferences>,
     }
 }
 

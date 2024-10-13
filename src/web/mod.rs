@@ -14,9 +14,7 @@ use crate::{AvailablePreferences, Interest};
 use drop_on_main_thread::DropOnMainThread;
 use event_listener::EventListenerGuard;
 use futures_channel::mpsc;
-use futures_core::stream::BoxStream;
-use futures_core::Stream;
-use futures_util::{future, stream, StreamExt as _};
+use futures_lite::{stream, Stream, StreamExt as _};
 use pin_project_lite::pin_project;
 use web_sys::window;
 
@@ -40,7 +38,7 @@ pin_project! {
     pub(crate) struct PreferencesStream {
         _guards: Vec<DropOnMainThread<EventListenerGuard>>,
         _accent_color: AccentColorObserver,
-        #[pin] inner: BoxStream<'static, AvailablePreferences>,
+        #[pin] inner: stream::Boxed<AvailablePreferences>,
     }
 }
 
@@ -62,7 +60,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
         return PreferencesStream {
             _guards: Vec::default(),
             _accent_color: AccentColorObserver::default(),
-            inner: stream::once(future::ready(AvailablePreferences::default())).boxed(),
+            inner: stream::once(AvailablePreferences::default()).boxed(),
         };
     };
 
@@ -143,7 +141,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
         _accent_color: accent_color,
         #[cfg(not(feature = "accent-color"))]
         _accent_color: (),
-        inner: stream::once(future::ready(preferences))
+        inner: stream::once(preferences)
             .chain(changes(preferences, receiver))
             .boxed(),
     }

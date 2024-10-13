@@ -50,7 +50,7 @@
 //! <small>«*I believe in a universe that doesn't care and people
 //! who do. [...] but this whale is pretty cool.* ― Angus</small>
 
-use futures_core::Stream;
+use futures_lite::Stream;
 use pin_project_lite::pin_project;
 use stream_utils::Dedup;
 

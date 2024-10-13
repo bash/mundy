@@ -8,6 +8,7 @@ exclude = ["Justfile", "_typos.toml", "notes.md", "scripts/", ".github/"]
 repository = "https://github.com/bash/mundy"
 keywords = ["accessibility", "contrast", "UI", "color", "accent"]
 categories = ["os", "gui"]
+readme = "readme.md"
 
 [dependencies]
 cfg-if = "1.0.0"

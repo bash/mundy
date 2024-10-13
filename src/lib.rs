@@ -80,6 +80,10 @@ mod stream_utils;
 #[cfg_attr(docsrs, doc(cfg(doc)))]
 pub mod feature_flags {}
 
+#[cfg(doctest)]
+#[doc = include_str!("../readme.md")]
+pub mod readme_doctest {}
+
 /// A collection of preferences retrieved by calling either
 /// [`Preferences::stream`] or [`Preferences::subscribe`].
 ///

@@ -15,6 +15,9 @@ The following preferences are supported:
 
 ## Example
 ```rust,no_run
+use mundy::{Preferences, Interest};
+use futures_util::StreamExt as _;
+
 // Interest tells mundy which preferences it should monitor for you.
 // use `Interest::All` if you're interested in all preferences.
 let mut stream = Preferences::stream(Interest::AccentColor);
@@ -23,7 +26,7 @@ async {
     while let Some(preferences) = stream.next().await {
         eprintln!("accent color: {:?}", preferences.accent_color);
     }
-}
+};
 ```
 
 ## [Docs](https://docs.rs/mundy)

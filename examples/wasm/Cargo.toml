@@ -1,0 +1,13 @@
+[package]
+name = "wasm-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+console_log = { version = "1.0.0" }
+log = { version = "0.4", features = ["std"] }
+mundy = { path = "../..", features = ["log"] }
+wasm-bindgen = "0.2.93"
+wasm-bindgen-futures = "0.4.43"
+web-sys = { version = "0.3.70", features = ["console", "Window", "Document", "HtmlElement", "CssStyleDeclaration"] }
+futures-util = "0.3"

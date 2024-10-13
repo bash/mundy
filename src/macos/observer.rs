@@ -1,0 +1,240 @@
+#[cfg(feature = "accent-color")]
+use super::get_accent_color;
+#[cfg(feature = "contrast")]
+use super::get_contrast;
+#[cfg(feature = "reduced-motion")]
+use super::get_reduced_motion;
+#[cfg(feature = "reduced-transparency")]
+use super::get_reduced_transparency;
+#[cfg(feature = "_macos-accessibility")]
+use super::get_shared_workspace;
+#[cfg(feature = "color-scheme")]
+use super::main_thread::run_on_main_async;
+#[cfg(feature = "_macos-accessibility")]
+use super::preference::AccessibilityPreferences;
+use super::preference::Preference;
+#[cfg(feature = "color-scheme")]
+use super::to_color_scheme;
+use crate::Interest;
+use futures_channel::mpsc;
+use objc2::rc::Retained;
+#[cfg(feature = "color-scheme")]
+use objc2::runtime::AnyObject;
+#[cfg(any(feature = "accent-color", feature = "_macos-accessibility"))]
+use objc2::sel;
+use objc2::{declare_class, msg_send_id, mutability, ClassType, DeclaredClass};
+#[cfg(feature = "color-scheme")]
+use objc2_app_kit::NSAppearance;
+use objc2_app_kit::NSApplication;
+#[cfg(feature = "accent-color")]
+use objc2_app_kit::NSSystemColorsDidChangeNotification;
+#[cfg(feature = "_macos-accessibility")]
+use objc2_app_kit::NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification;
+#[cfg(feature = "accent-color")]
+use objc2_foundation::NSNotificationCenter;
+use objc2_foundation::NSObject;
+#[cfg(feature = "color-scheme")]
+use objc2_foundation::{
+    ns_string, NSDictionary, NSKeyValueChangeKey, NSKeyValueChangeNewKey,
+    NSKeyValueObservingOptions, NSObjectNSKeyValueObserverRegistration as _, NSString,
+};
+#[cfg(feature = "color-scheme")]
+use std::ffi::c_void;
+#[cfg(feature = "color-scheme")]
+use std::ptr;
+
+pub(crate) struct ObserverRegistration {
+    observer: Retained<Observer>,
+    interest: Interest,
+}
+
+#[cfg(feature = "color-scheme")]
+fn effective_appearance_key() -> &'static NSString {
+    ns_string!("effectiveAppearance")
+}
+
+impl Observer {
+    pub(crate) fn register(
+        #[cfg_attr(not(feature = "color-scheme"), expect(unused_variables))]
+        application: &NSApplication,
+        sender: mpsc::UnboundedSender<Preference>,
+        interest: Interest,
+    ) -> ObserverRegistration {
+        let observer = Self::new(sender);
+
+        #[cfg(feature = "color-scheme")]
+        if interest.is(Interest::ColorScheme) {
+            // SAFETY: The observer is removed on drop.
+            unsafe {
+                application.addObserver_forKeyPath_options_context(
+                    &observer,
+                    effective_appearance_key(),
+                    NSKeyValueObservingOptions::NSKeyValueObservingOptionNew
+                        | NSKeyValueObservingOptions::NSKeyValueObservingOptionOld,
+                    ptr::null_mut(),
+                );
+            }
+        }
+
+        #[cfg(feature = "_macos-accessibility")]
+        if interest.is(Interest::MacOSAccessibility) {
+            let workspace = get_shared_workspace();
+            // SAFETY: Similar as for `get_shared_workspace()`.
+            let notification_center = unsafe { workspace.notificationCenter() };
+            // SAFETY: The observer is removed on drop.
+            unsafe {
+                notification_center.addObserver_selector_name_object(
+                    &observer,
+                    sel!(accessibilityDisplayOptionsDidChange),
+                    Some(NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification),
+                    None,
+                );
+            }
+        }
+
+        #[cfg(feature = "accent-color")]
+        if interest.is(Interest::AccentColor) {
+            // SAFETY: The observer is removed on drop.
+            unsafe {
+                // We're reacting to `NSSystemColorsDidChangeNotification` instead of the sometimes
+                // used "AppleColorPreferencesChangedNotification" for two reasons:
+                // * The former is officially documented while the latter is not.
+                // * When reacting to the latter, `NSColor::controlAccentColor()` is sometimes not updated yet.
+                let notification_center = NSNotificationCenter::defaultCenter();
+                notification_center.addObserver_selector_name_object(
+                    &observer,
+                    sel!(systemColorsDidChange),
+                    Some(NSSystemColorsDidChangeNotification),
+                    None,
+                );
+            }
+        }
+
+        ObserverRegistration { observer, interest }
+    }
+
+    fn new(sender: mpsc::UnboundedSender<Preference>) -> Retained<Observer> {
+        let observer = Observer::alloc().set_ivars(Ivars { sender });
+        // SAFETY: Our instance is allocated and the instance vars are set.
+        unsafe { msg_send_id![super(observer), init] }
+    }
+}
+
+impl Drop for ObserverRegistration {
+    fn drop(&mut self) {
+        #[cfg(feature = "color-scheme")]
+        if self.interest.is(Interest::ColorScheme) {
+            let observer = self.observer.clone();
+            // Note that this leaks if there's no queue running on the main thread
+            // (I don't think that there's anything we can do?)
+            run_on_main_async(move |mtm| {
+                let application = NSApplication::sharedApplication(mtm);
+                unsafe {
+                    application.removeObserver_forKeyPath(&observer, effective_appearance_key());
+                }
+            });
+        }
+
+        #[cfg(feature = "_macos-accessibility")]
+        if self.interest.is(Interest::MacOSAccessibility) {
+            let workspace = get_shared_workspace();
+            // SAFETY: Similar as for `get_shared_workspace()`.
+            let notification_center = unsafe { workspace.notificationCenter() };
+            unsafe {
+                notification_center.removeObserver(&self.observer);
+            }
+        }
+
+        #[cfg(feature = "accent-color")]
+        if self.interest.is(Interest::AccentColor) {
+            unsafe {
+                let notification_center = NSNotificationCenter::defaultCenter();
+                notification_center.removeObserver(&self.observer);
+            }
+        }
+    }
+}
+
+declare_class! {
+    pub(crate) struct Observer;
+
+    // SAFETY:
+    // * The superclass NSObject does not have any subclassing requirements.
+    // * Interior mutability is a safe default.
+    unsafe impl ClassType for Observer {
+        type Super = NSObject;
+        type Mutability = mutability::InteriorMutable;
+        const NAME: &'static str = "MundyObserver";
+    }
+
+    impl DeclaredClass for Observer {
+        type Ivars = Ivars;
+    }
+
+    unsafe impl Observer {
+        #[cfg(feature = "accent-color")]
+        #[method(systemColorsDidChange)]
+        fn system_colors_did_change(&self) {
+            _ = self.ivars().sender.unbounded_send(Preference::AccentColor(get_accent_color()));
+        }
+
+        #[cfg(feature = "_macos-accessibility")]
+        #[method(accessibilityDisplayOptionsDidChange)]
+        fn accessibility_options_did_change(&self) {
+            let mut prefs = AccessibilityPreferences::default();
+            #[cfg(feature = "contrast")]
+            {
+                prefs.contrast = get_contrast();
+            }
+            #[cfg(feature = "reduced-motion")]
+            {
+                prefs.reduced_motion = get_reduced_motion();
+            }
+            #[cfg(feature = "reduced-transparency")]
+            {
+                prefs.reduced_transparency = get_reduced_transparency();
+            }
+            _ = self.ivars().sender.unbounded_send(Preference::Accessibility(prefs));
+        }
+
+        #[cfg(feature = "color-scheme")]
+        #[method(observeValueForKeyPath:ofObject:change:context:)]
+        fn observe_value(
+            &self,
+            key_path: Option<&NSString>,
+            _object: Option<&AnyObject>,
+            change: Option<&NSDictionary<NSKeyValueChangeKey, AnyObject>>,
+            _context: *mut c_void,
+        )
+        {
+            if key_path == Some(effective_appearance_key()) {
+                let change = change.expect("requested a change dictionary in `addObserver`, but none was provided");
+                let new = change.get(unsafe { NSKeyValueChangeNewKey }).expect("requested change dictionary did not contain `NSKeyValueChangeNewKey`");
+                // SAFETY: The value of `effectiveAppearance` is `NSAppearance`
+                let new: &NSAppearance = unsafe { &*(new as *const AnyObject).cast() };
+                _ = self.ivars().sender.unbounded_send(Preference::ColorScheme(to_color_scheme(new)));
+            }
+        }
+    }
+}
+
+// SAFETY:
+// * `NSObject` (the super class) is thread-safe.
+// * The ivars are Send and Sync.
+// See: https://github.com/madsmtm/objc2/issues/634
+unsafe impl Send for Observer {}
+
+// SAFETY:
+// * `NSObject` (the super class) is thread-safe.
+// * The ivars are Send and Sync.
+// See: https://github.com/madsmtm/objc2/issues/634
+// TODO: review this
+unsafe impl Sync for Observer {}
+
+#[derive(Clone)]
+pub(crate) struct Ivars {
+    sender: mpsc::UnboundedSender<Preference>,
+}
+
+#[cfg(test)]
+static_assertions::assert_impl_all!(Ivars: Send, Sync);

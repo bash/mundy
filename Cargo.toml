@@ -1,0 +1,91 @@
+[package]
+name = "mundy"
+description = "Reads various system-level accessibility and UI preferences"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+exclude = ["Justfile", "_typos.toml", "notes.md", "scripts/", ".github/"]
+repository = "https://github.com/bash/mundy"
+keywords = ["accessibility", "contrast", "UI", "color", "accent"]
+categories = ["os", "gui"]
+
+[dependencies]
+cfg-if = "1.0.0"
+futures-core = "0.3"
+futures-util = "0.3"
+pin-project-lite = "0.2"
+epaint = { version = "0.29.1", optional = true }
+bevy_color = { version = "0.14.3", optional = true }
+log = { version = "0.4", optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5.2"
+objc2-app-kit = { version = "0.2.2", features = ["NSApplication", "NSResponder"] }
+objc2-foundation = { version = "0.2.2", features = ["NSThread", "NSObject", "NSString"] }
+futures-channel = "0.3"
+dispatch = { version = "0.2", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58.0", features = ["UI_ViewManagement", "Win32_System_Com", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
+futures-channel = "0.3"
+slab = "0.4.9"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = { version = "4.4.0", default-features = false }
+async-io = { version = "2.3.4", optional = true }
+tokio = { version = "1.37.0", optional = true, default-features = false }
+
+[target.'cfg(all(any(target_arch = "wasm32", target_arch = "wasm64"), target_os = "unknown"))'.dependencies]
+web-sys = { version = "0.3.70", features = ["MediaQueryList", "Window", "Event", "MediaQueryListEvent"] }
+wasm-bindgen = "0.2.93"
+futures-channel = "0.3"
+wasm-bindgen-futures = "0.4"
+
+# On Linux, we already have either async-io or tokio, so no need for beul.
+# On WASM, we don't need block_on (we use spawn_local instead), so no need for beul.
+[target.'cfg(not(any(target_os = "linux", all(any(target_arch = "wasm32", target_arch = "wasm64"), target_os = "unknown"))))'.dependencies]
+beul = { version = "1.0.0", optional = true }
+
+[features]
+default = ["async-io", "callback", "_all-preferences"]
+async-io = ["zbus/async-io", "dep:async-io"]
+tokio = ["zbus/tokio", "dep:tokio"]
+callback = ["dep:beul"]
+color-scheme = [
+    "dep:dispatch",
+    "objc2-app-kit/NSAppearance",
+    "objc2-foundation/NSKeyValueObserving",
+]
+contrast = ["_macos-accessibility"]
+reduced-motion = ["_macos-accessibility"]
+reduced-transparency = ["_macos-accessibility"]
+accent-color = [
+    "web-sys/Comment",
+    "web-sys/CssStyleDeclaration",
+    "web-sys/Document",
+    "web-sys/HtmlElement",
+    "web-sys/TransitionEvent",
+    "web-sys/css",
+    "objc2-app-kit/NSColorSpace",
+    "objc2-app-kit/NSColor",
+    "objc2-foundation/NSDistributedNotificationCenter",
+    "objc2-foundation/NSNotification",
+]
+_all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color"]
+_macos-accessibility = [
+    "objc2-app-kit/NSWorkspace",
+    "objc2-app-kit/NSAccessibility",
+]
+
+[workspace]
+resolver = "2"
+members = [
+    "examples/*"
+]
+
+[dev-dependencies]
+static_assertions = "1.1.0"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--generate-link-to-definition"]

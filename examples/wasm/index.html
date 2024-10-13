@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="color-scheme" content="dark light" />
+    <head>
+        <link data-trunk rel="rust" data-wasm-opt="2" />
+        <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
+        <base data-trunk-public-url />
+        <style>code { font-size: 1rem; line-height: 1.5; }</style>
+    </head>
+    <body>
+        <main>
+            <p>
+                <code>
+                    <strong>Color Scheme:</strong> <span id="color-scheme"></span><br>
+                    <strong>Contrast:</strong> <span id="contrast"></span><br>
+                    <strong>Reduced Motion:</strong> <span id="reduced-motion"></span><br>
+                    <strong>Reduced Transparency:</strong> <span id="reduced-transparency"></span><br>
+                    <strong>Accent Color:</strong> <span id="accent-color-sample">⬤</span> <span id="accent-color"></span><br>
+                </code>
+            </p>
+        </main>
+    </body>
+</html>

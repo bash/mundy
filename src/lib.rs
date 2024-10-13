@@ -40,8 +40,15 @@
 //! Alternatively, there's [`Preferences::subscribe`] which
 //! accepts a simple callback function instead.
 //!
-//! «*I believe in a universe that doesn't care and people \
-//! who do. [...] but this whale is pretty cool.* ― Angus
+//! ## Errors
+//! Most errors (except some fatal errors at startup) are simply ignored
+//! and the default value for the preference (which is usually `NoPreference`) is returned.
+//! It can be useful to turn on the `log` feature to find out what's going on.
+//!
+//! <br>
+//!
+//! <small>«*I believe in a universe that doesn't care and people
+//! who do. [...] but this whale is pretty cool.* ― Angus</small>
 
 use futures_core::Stream;
 use pin_project_lite::pin_project;

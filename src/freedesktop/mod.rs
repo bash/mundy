@@ -7,12 +7,9 @@ use crate::ReducedMotion;
 #[cfg(feature = "accent-color")]
 use crate::{AccentColor, Srgba};
 
-use crate::stream_utils::Scan;
+use crate::stream_utils::{Left, Right, Scan};
 use crate::{AvailablePreferences, Interest};
-use futures_core::stream::BoxStream;
-use futures_core::Stream;
-use futures_util::future::Either::*;
-use futures_util::{future, stream, StreamExt as _};
+use futures_lite::{stream, Stream, StreamExt as _};
 use zbus::{
     proxy::SignalStream,
     zvariant::{OwnedValue, Value},
@@ -55,15 +52,15 @@ const ACCENT_COLOR: &str = "accent-color";
 #[cfg(feature = "reduced-motion")]
 const ENABLE_ANIMATIONS: &str = "enable-animations";
 
-pub(crate) type PreferencesStream = BoxStream<'static, AvailablePreferences>;
+pub(crate) type PreferencesStream = stream::Boxed<AvailablePreferences>;
 
 pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     preferences_stream(interest).boxed()
 }
 
 fn preferences_stream(interest: Interest) -> impl Stream<Item = AvailablePreferences> {
-    stream::once(connect(interest)).flat_map(move |(preferences, stream)| {
-        let initial_value = stream::once(future::ready(preferences));
+    stream::once_future(connect(interest)).flat_map(move |(preferences, stream)| {
+        let initial_value = stream::once(preferences);
         let stream = stream.map(Left).unwrap_or_else(|| Right(stream::empty()));
         initial_value.chain(changes(interest, preferences, stream))
     })

@@ -1,5 +1,5 @@
-use futures_core::ready;
-use futures_core::stream::Stream;
+use futures_lite::ready;
+use futures_lite::stream::Stream;
 use pin_project_lite::pin_project;
 use std::pin::Pin;
 use std::task::{Context, Poll};

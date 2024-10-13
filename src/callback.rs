@@ -1,5 +1,6 @@
 use crate::{async_rt, Interest, Preferences};
-use futures_util::{stream, StreamExt as _};
+use futures_channel::oneshot;
+use futures_lite::{stream, StreamExt as _};
 
 pub trait CallbackFn: FnMut(Preferences) + Send + Sync + 'static {}
 
@@ -7,18 +8,13 @@ impl<F> CallbackFn for F where F: FnMut(Preferences) + Send + Sync + 'static {}
 
 /// A subscription for preferences created using [`Preferences::subscribe()`].
 /// Dropping the subscription will cancel it and clean up all associated resources.
-pub struct Subscription(Option<stream::AbortHandle>);
+pub struct Subscription(
+    #[expect(dead_code, reason = "only used to send a canceled message on drop")]
+    Option<oneshot::Sender<()>>,
+);
 
 #[cfg(test)]
 static_assertions::assert_impl_all!(Subscription: Send, Sync);
-
-impl Drop for Subscription {
-    fn drop(&mut self) {
-        if let Some(handle) = &self.0 {
-            handle.abort();
-        }
-    }
-}
 
 impl Preferences {
     /// Creates a new subscription for a selection of system preferences given by `interests`.
@@ -32,12 +28,23 @@ impl Preferences {
         if interest.is_empty() {
             return Subscription(None);
         }
-        let (mut stream, handle) = stream::abortable(Self::stream(interest));
+        let (sender, receiver) = oneshot::channel();
+        let mut stream = Self::stream(interest)
+            .map(Message::Preferences)
+            .race(stream::once_future(receiver).map(|_| Message::Shutdown));
         async_rt::spawn_future(async move {
-            while let Some(p) = stream.next().await {
-                callback(p);
+            while let Some(message) = stream.next().await {
+                match message {
+                    Message::Preferences(preferences) => callback(preferences),
+                    Message::Shutdown => break,
+                }
             }
         });
-        Subscription(Some(handle))
+        Subscription(Some(sender))
     }
+}
+
+enum Message {
+    Preferences(Preferences),
+    Shutdown,
 }

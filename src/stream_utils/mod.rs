@@ -15,3 +15,8 @@ pub(crate) use scan::*;
 
 mod dedup;
 pub(crate) use dedup::*;
+
+#[cfg(target_os = "linux")]
+mod either;
+#[cfg(target_os = "linux")]
+pub(crate) use either::*;

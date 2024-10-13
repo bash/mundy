@@ -17,6 +17,7 @@ macro_rules! impl_interest {
             /// Note that only the preferences that have their
             /// corresponding feature enabled will actually be reported.
             pub const All: $name = {
+                #[allow(unused_mut)]
                 let mut value = 0;
                 $(
                     #[cfg($cfg)]

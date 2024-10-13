@@ -13,9 +13,7 @@ use crate::ReducedTransparency;
 use crate::{AccentColor, Srgba};
 use crate::{AvailablePreferences, Interest};
 use futures_channel::mpsc;
-use futures_core::stream::BoxStream;
-use futures_core::Stream;
-use futures_util::{future, stream, StreamExt as _};
+use futures_lite::{stream, Stream, StreamExt as _};
 #[cfg(feature = "_macos-accessibility")]
 use objc2::rc::Retained;
 use objc2_app_kit::NSApplication;
@@ -49,7 +47,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     let initial_value = get_preferences(interest, &application);
 
     PreferencesStream {
-        inner: stream::once(future::ready(initial_value))
+        inner: stream::once(initial_value)
             .chain(changes(initial_value, receiver))
             .boxed(),
         _observer: observer,
@@ -58,7 +56,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
 
 pin_project! {
     pub(crate) struct PreferencesStream {
-        #[pin] inner: BoxStream<'static, AvailablePreferences>,
+        #[pin] inner: stream::Boxed<AvailablePreferences>,
         _observer: ObserverRegistration,
     }
 }

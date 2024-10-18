@@ -1,0 +1,9 @@
+[package]
+name = "bevy-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bevy = { git = "https://github.com/bevyengine/bevy" }
+bevy_mundy = { path = "../../crates/bevy_mundy" }

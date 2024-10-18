@@ -55,3 +55,10 @@ impl From<Srgba> for bevy_color::Srgba {
         bevy_color::Srgba::from_f32_array(value.to_f64_array().map(|c| c as f32))
     }
 }
+
+#[cfg(feature = "bevy_color")]
+impl From<Srgba> for bevy_color::Color {
+    fn from(value: Srgba) -> Self {
+        bevy_color::Srgba::from(value).into()
+    }
+}

@@ -1,0 +1,23 @@
+[package]
+name = "bevy_mundy"
+description = "Bevy integration for reading various system-level accessibility and UI preferences"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/bash/mundy"
+keywords = ["accessibility", "contrast", "UI", "color", "accent"]
+categories = ["os", "gui"]
+readme = "readme.md"
+
+[dependencies]
+mundy = { version = "0.1.1", path = "../..", default-features = false, features = ["async-io", "bevy_color"] }
+bevy = { git = "https://github.com/bevyengine/bevy", default-features = false, features = ["bevy_winit", "x11"] }
+async-channel = "2.3.1"
+
+[features]
+default = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color"]
+color-scheme = ["mundy/color-scheme"]
+contrast = ["mundy/contrast"]
+reduced-motion = ["mundy/reduced-motion"]
+reduced-transparency = ["mundy/reduced-transparency"]
+accent-color = ["mundy/accent-color"]

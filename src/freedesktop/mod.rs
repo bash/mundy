@@ -59,7 +59,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
 }
 
 fn preferences_stream(interest: Interest) -> impl Stream<Item = AvailablePreferences> {
-    stream::once_future(connect(interest)).flat_map(move |(preferences, stream)| {
+    stream::once_future(subscribe(interest)).flat_map(move |(preferences, stream)| {
         let initial_value = stream::once(preferences);
         let stream = stream.map(Left).unwrap_or_else(|| Right(stream::empty()));
         initial_value.chain(changes(interest, preferences, stream))
@@ -83,14 +83,18 @@ fn changes(
     )
 }
 
-async fn connect(interest: Interest) -> (AvailablePreferences, Option<SignalStream<'static>>) {
-    match connect_(interest).await {
-        Ok((proxy, stream)) => {
+async fn subscribe(interest: Interest) -> (AvailablePreferences, Option<SignalStream<'static>>) {
+    match connect().await {
+        Ok(proxy) => {
+            let stream = setting_changed(&proxy, interest)
+                .await
+                .inspect_err(log_dbus_connection_error)
+                .ok();
             let preferences = initial_preferences(&proxy, interest)
                 .await
                 .inspect_err(log_initial_settings_retrieval_error)
                 .unwrap_or_default();
-            (preferences, Some(stream))
+            (preferences, stream)
         }
         Err(err) => {
             log_dbus_connection_error(&err);
@@ -99,11 +103,9 @@ async fn connect(interest: Interest) -> (AvailablePreferences, Option<SignalStre
     }
 }
 
-async fn connect_(interest: Interest) -> zbus::Result<(Proxy<'static>, SignalStream<'static>)> {
+async fn connect() -> zbus::Result<Proxy<'static>> {
     let connection = Connection::session().await?;
-    let proxy = settings_proxy(&connection).await?;
-    let stream = setting_changed(&proxy, interest).await?;
-    Ok((proxy, stream))
+    settings_proxy(&connection).await
 }
 
 async fn apply_message(

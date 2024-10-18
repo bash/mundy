@@ -1,4 +1,12 @@
 /// A color in the sRGB color space. Each component is in the range `[0, 1]`.
+///
+/// ## Examples
+/// ```
+/// # use mundy::Srgba;
+/// # let color = Srgba { red: 1., green: 0., blue: 0., alpha: 1. };
+/// // Convert each channels to u8
+/// let (r, g, b, a) = color.to_u8_array().into();
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Srgba {
     pub red: f64,

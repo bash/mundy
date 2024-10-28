@@ -12,6 +12,7 @@ The following preferences are supported:
 * `Contrast`—The user's preferred contrast level.
 * `ReducedMotion`—The user's reduced motion preference.
 * `ReducedTransparency`—The user's reduced transparency preference.
+* `DoubleClickInterval`—The maximum amount of time allowed between the first and second click.
 
 ## Example
 ```rust,no_run

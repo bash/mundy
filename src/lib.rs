@@ -17,6 +17,7 @@
 //! * [`Contrast`]—The user's preferred contrast level.
 //! * [`ReducedMotion`]—The user's reduced motion preference.
 //! * [`ReducedTransparency`]—The user's reduced transparency preference.
+//! * [`DoubleClickInterval`]—The maximum amount of time allowed between the first and second click.
 //!
 //! ## Example
 //! The easiest way to get the preferences is to use the
@@ -114,6 +115,10 @@ pub struct Preferences {
     /// The user's current system wide accent color preference.
     #[cfg(feature = "accent-color")]
     pub accent_color: AccentColor,
+    /// The maximum amount of time that may occur between the first and second click
+    /// event for it to count as double click.
+    #[cfg(feature = "double-click-interval")]
+    pub double_click_interval: DoubleClickInterval,
 }
 
 impl Preferences {
@@ -164,6 +169,7 @@ impls! {
         "contrast" contrast,
         "reduced-motion" reduced_motion,
         "accent-color" accent_color,
+        "double-click-interval" double_click_interval,
     };
 
     #[cfg(windows)]
@@ -255,7 +261,7 @@ pub enum Contrast {
 /// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion>.
 ///
 /// ## Sources
-/// * Linux: `org.gnome.desktop.interface enable-animations` from the [XDG Settings portal][xdg].
+/// * Linux (GNOME-only): `org.gnome.desktop.interface enable-animations` from the [XDG Settings portal][xdg].
 /// * Windows: [`UISettings.AnimationsEnabled`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.animationsenabled)
 /// * macOS: [`accessibilityDisplayShouldReduceMotion`](https://developer.apple.com/documentation/appkit/nsworkspace/1644069-accessibilitydisplayshouldreduce)
 /// * Web: `@media (prefers-reduced-motion: ...)`
@@ -308,3 +314,22 @@ pub enum ReducedTransparency {
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[cfg(feature = "accent-color")]
 pub struct AccentColor(pub Option<Srgba>);
+
+/// The maximum amount of time that may occur between the first and second click
+/// event for it to count as double click.
+///
+/// A typical value for this setting is ~500 ms.
+///
+/// ## Sources
+/// * Linux (GNOME-only): `org.gnome.desktop.peripherals.mouse double-click` from the [XDG Settings portal][xdg].
+/// * Windows: [`GetDoubleClickTime`](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdoubleclicktime)
+/// * macOS: [`NSEvent.doubleClickInterval`](https://developer.apple.com/documentation/appkit/nsevent/1528384-doubleclickinterval)
+/// * Web: Unsupported
+///
+/// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg(feature = "double-click-interval")]
+pub struct DoubleClickInterval(pub Option<std::time::Duration>);
+
+// TODO: Windows also has a double click size:
+// https://github.com/dotnet/winforms/blob/7376e50c5a762131398992def2e76f4586fe5025/src/System.Windows.Forms/src/System/Windows/Forms/SystemInformation.cs#L263

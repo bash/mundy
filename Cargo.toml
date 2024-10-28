@@ -26,7 +26,7 @@ log = { version = "0.4", optional = true }
 objc2 = "0.5.2"
 objc2-app-kit = { version = "0.2.2", features = ["NSApplication", "NSResponder"] }
 objc2-foundation = { version = "0.2.2", features = ["NSThread", "NSObject", "NSString"] }
-futures-channel = "0.3"
+futures-channel = { version = "0.3", optional = true }
 dispatch = { version = "0.2", optional = true }
 
 [target.'cfg(windows)'.dependencies]
@@ -56,6 +56,7 @@ async-io = ["zbus/async-io", "dep:async-io"]
 tokio = ["zbus/tokio", "dep:tokio"]
 callback = ["dep:beul", "dep:futures-channel"]
 color-scheme = [
+    "_macos-observable",
     "dep:dispatch",
     "objc2-app-kit/NSAppearance",
     "objc2-foundation/NSKeyValueObserving",
@@ -64,6 +65,7 @@ contrast = ["_macos-accessibility"]
 reduced-motion = ["_macos-accessibility", "_gnome_only"]
 reduced-transparency = ["_macos-accessibility"]
 accent-color = [
+    "_macos-observable",
     "web-sys/Comment",
     "web-sys/CssStyleDeclaration",
     "web-sys/Document",
@@ -75,12 +77,17 @@ accent-color = [
     "objc2-foundation/NSDistributedNotificationCenter",
     "objc2-foundation/NSNotification",
 ]
-double-click-interval = ["_gnome_only"]
+double-click-interval = [
+    "_gnome_only",
+    "objc2-app-kit/NSEvent",
+]
 _all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color", "double-click-interval"]
 _macos-accessibility = [
+    "_macos-observable",
     "objc2-app-kit/NSWorkspace",
     "objc2-app-kit/NSAccessibility",
 ]
+_macos-observable = ["dep:futures-channel"]
 _gnome_only = []
 
 [workspace]

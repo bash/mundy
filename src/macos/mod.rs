@@ -1,10 +1,13 @@
 // For the safety review: https://github.com/madsmtm/objc2/tree/master/crates/header-translator#what-is-required-for-a-method-to-be-safe
 
+#[cfg(feature = "_macos-observable")]
 use crate::stream_utils::Scan;
 #[cfg(feature = "color-scheme")]
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]
 use crate::Contrast;
+#[cfg(feature = "double-click-interval")]
+use crate::DoubleClickInterval;
 #[cfg(feature = "reduced-motion")]
 use crate::ReducedMotion;
 #[cfg(feature = "reduced-transparency")]
@@ -12,11 +15,14 @@ use crate::ReducedTransparency;
 #[cfg(feature = "accent-color")]
 use crate::{AccentColor, Srgba};
 use crate::{AvailablePreferences, Interest};
+#[cfg(feature = "_macos-observable")]
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
 #[cfg(feature = "_macos-accessibility")]
 use objc2::rc::Retained;
 use objc2_app_kit::NSApplication;
+#[cfg(feature = "double-click-interval")]
+use objc2_app_kit::NSEvent;
 #[cfg(feature = "_macos-accessibility")]
 use objc2_app_kit::NSWorkspace;
 #[cfg(feature = "color-scheme")]
@@ -26,38 +32,60 @@ use objc2_app_kit::{NSColor, NSColorSpace};
 use objc2_foundation::MainThreadMarker;
 #[cfg(feature = "color-scheme")]
 use objc2_foundation::{NSArray, NSCopying as _};
+#[cfg(feature = "_macos-observable")]
 use observer::{Observer, ObserverRegistration};
 use pin_project_lite::pin_project;
+#[cfg(feature = "_macos-observable")]
 use preference::Preference;
+#[cfg(feature = "double-click-interval")]
+use std::time::Duration;
 
 #[cfg(feature = "color-scheme")]
 mod main_thread;
+#[cfg(feature = "_macos-observable")]
 mod observer;
+#[cfg(feature = "_macos-observable")]
 mod preference;
 
 pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     let mtm =
         MainThreadMarker::new().expect("on macOS, `subscribe` must be called from the main thread");
-    let (sender, receiver) = mpsc::unbounded();
 
     // A lot of APIs (including the notification center) only proper work when
     // NSApplication.shared is initialized.
     let application = NSApplication::sharedApplication(mtm);
+    #[cfg(feature = "_macos-observable")]
+    let (sender, receiver) = mpsc::unbounded();
+    #[cfg(feature = "_macos-observable")]
     let observer = Observer::register(&application, sender, interest);
     let initial_value = get_preferences(interest, &application);
 
+    #[cfg(feature = "_macos-observable")]
+    let inner = stream::once(initial_value)
+        .chain(changes(initial_value, receiver))
+        .boxed();
+    #[cfg(not(feature = "_macos-observable"))]
+    let inner = stream::once(initial_value).boxed();
+
     PreferencesStream {
-        inner: stream::once(initial_value)
-            .chain(changes(initial_value, receiver))
-            .boxed(),
+        inner,
+        #[cfg(feature = "_macos-observable")]
         _observer: observer,
     }
 }
 
+#[cfg(feature = "_macos-observable")]
 pin_project! {
     pub(crate) struct PreferencesStream {
         #[pin] inner: stream::Boxed<AvailablePreferences>,
         _observer: ObserverRegistration,
+    }
+}
+
+#[cfg(not(feature = "_macos-observable"))]
+pin_project! {
+    pub(crate) struct PreferencesStream {
+        #[pin] inner: stream::Boxed<AvailablePreferences>,
     }
 }
 
@@ -72,6 +100,7 @@ impl Stream for PreferencesStream {
     }
 }
 
+#[cfg(feature = "_macos-observable")]
 fn changes(
     seed: AvailablePreferences,
     receiver: mpsc::UnboundedReceiver<Preference>,
@@ -112,6 +141,11 @@ fn get_preferences(
     #[cfg(feature = "accent-color")]
     if interest.is(Interest::AccentColor) {
         preferences.accent_color = get_accent_color();
+    }
+
+    #[cfg(feature = "double-click-interval")]
+    if interest.is(Interest::DoubleClickInterval) {
+        preferences.double_click_interval = get_double_click_interval();
     }
 
     preferences
@@ -194,4 +228,11 @@ fn to_srgb(color: &NSColor) -> Option<Srgba> {
         blue: unsafe { color_in_srgb.blueComponent() } as _,
         alpha: unsafe { color_in_srgb.alphaComponent() } as _,
     })
+}
+
+#[cfg(feature = "double-click-interval")]
+fn get_double_click_interval() -> DoubleClickInterval {
+    // NSTimeInterval: A number of seconds.
+    let interval = unsafe { NSEvent::doubleClickInterval() };
+    DoubleClickInterval(Duration::try_from_secs_f64(interval).ok())
 }

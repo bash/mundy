@@ -5,6 +5,8 @@ use crate::stream_utils::Scan;
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]
 use crate::Contrast;
+#[cfg(feature = "double-click-interval")]
+use crate::DoubleClickInterval;
 #[cfg(feature = "reduced-motion")]
 use crate::ReducedMotion;
 #[cfg(feature = "reduced-transparency")]
@@ -17,6 +19,8 @@ use futures_lite::{stream, Stream, StreamExt as _};
 #[cfg(feature = "_macos-accessibility")]
 use objc2::rc::Retained;
 use objc2_app_kit::NSApplication;
+#[cfg(feature = "double-click-interval")]
+use objc2_app_kit::NSEvent;
 #[cfg(feature = "_macos-accessibility")]
 use objc2_app_kit::NSWorkspace;
 #[cfg(feature = "color-scheme")]
@@ -29,6 +33,8 @@ use objc2_foundation::{NSArray, NSCopying as _};
 use observer::{Observer, ObserverRegistration};
 use pin_project_lite::pin_project;
 use preference::Preference;
+#[cfg(feature = "double-click-interval")]
+use std::time::Duration;
 
 #[cfg(feature = "color-scheme")]
 mod main_thread;
@@ -114,6 +120,11 @@ fn get_preferences(
         preferences.accent_color = get_accent_color();
     }
 
+    #[cfg(feature = "double-click-interval")]
+    if interest.is(Interest::DoubleClickInterval) {
+        preferences.double_click_interval = get_double_click_interval();
+    }
+
     preferences
 }
 
@@ -194,4 +205,11 @@ fn to_srgb(color: &NSColor) -> Option<Srgba> {
         blue: unsafe { color_in_srgb.blueComponent() } as _,
         alpha: unsafe { color_in_srgb.alphaComponent() } as _,
     })
+}
+
+#[cfg(feature = "double-click-interval")]
+fn get_double_click_interval() -> DoubleClickInterval {
+    // NSTimeInterval: A number of seconds.
+    let interval = unsafe { NSEvent::doubleClickInterval() };
+    DoubleClickInterval(Duration::try_from_secs_f64(interval).ok())
 }

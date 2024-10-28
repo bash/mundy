@@ -75,7 +75,10 @@ accent-color = [
     "objc2-foundation/NSDistributedNotificationCenter",
     "objc2-foundation/NSNotification",
 ]
-double-click-interval = ["_gnome_only"]
+double-click-interval = [
+    "_gnome_only",
+    "objc2-app-kit/NSEvent",
+]
 _all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color", "double-click-interval"]
 _macos-accessibility = [
     "objc2-app-kit/NSWorkspace",

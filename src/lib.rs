@@ -188,6 +188,7 @@ impls! {
         "reduced-motion" reduced_motion,
         "reduced-transparency" reduced_transparency,
         "accent-color" accent_color,
+        "double-click-interval" double_click_interval,
     };
 
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]

@@ -61,7 +61,7 @@ color-scheme = [
     "objc2-foundation/NSKeyValueObserving",
 ]
 contrast = ["_macos-accessibility"]
-reduced-motion = ["_macos-accessibility"]
+reduced-motion = ["_macos-accessibility", "_gnome_only"]
 reduced-transparency = ["_macos-accessibility"]
 accent-color = [
     "web-sys/Comment",
@@ -75,11 +75,13 @@ accent-color = [
     "objc2-foundation/NSDistributedNotificationCenter",
     "objc2-foundation/NSNotification",
 ]
-_all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color"]
+double-click-interval = ["_gnome_only"]
+_all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color", "double-click-interval"]
 _macos-accessibility = [
     "objc2-app-kit/NSWorkspace",
     "objc2-app-kit/NSAccessibility",
 ]
+_gnome_only = []
 
 [workspace]
 resolver = "2"

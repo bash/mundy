@@ -2,10 +2,14 @@
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]
 use crate::Contrast;
+#[cfg(feature = "double-click-interval")]
+use crate::DoubleClickInterval;
 #[cfg(feature = "reduced-motion")]
 use crate::ReducedMotion;
 #[cfg(feature = "accent-color")]
 use crate::{AccentColor, Srgba};
+#[cfg(feature = "double-click-interval")]
+use std::time::Duration;
 
 use crate::stream_utils::{Left, Right, Scan};
 use crate::{AvailablePreferences, Interest};
@@ -43,6 +47,10 @@ fn log_message_error(_err: &zbus::Error) {}
 const APPEARANCE: &str = "org.freedesktop.appearance";
 #[cfg(feature = "reduced-motion")]
 const GNOME_INTERFACE: &str = "org.gnome.desktop.interface";
+#[cfg(feature = "double-click-interval")]
+const GNOME_PERIPHERALS_MOUSE: &str = "org.gnome.desktop.peripherals.mouse";
+#[cfg(feature = "double-click-interval")]
+const DOUBLE_CLICK: &str = "double-click";
 #[cfg(feature = "color-scheme")]
 const COLOR_SCHEME: &str = "color-scheme";
 #[cfg(feature = "contrast")]
@@ -132,6 +140,10 @@ async fn apply_message(
         (APPEARANCE, ACCENT_COLOR) if interest.is(Interest::AccentColor) => {
             preferences.accent_color = parse_accent_color(value);
         }
+        #[cfg(feature = "double-click-interval")]
+        (GNOME_PERIPHERALS_MOUSE, DOUBLE_CLICK) if interest.is(Interest::DoubleClickInterval) => {
+            preferences.double_click_interval = parse_double_click(value);
+        }
         _ => {}
     }
     Ok(())
@@ -170,6 +182,14 @@ async fn initial_preferences(
             .await
             .map(parse_accent_color)
             .unwrap_or_default();
+    }
+    #[cfg(feature = "double-click-interval")]
+    if interest.is(Interest::DoubleClickInterval) {
+        preferences.double_click_interval =
+            read_setting(proxy, GNOME_PERIPHERALS_MOUSE, DOUBLE_CLICK)
+                .await
+                .map(parse_double_click)
+                .unwrap_or_default();
     }
     Ok(preferences)
 }
@@ -214,10 +234,10 @@ async fn setting_changed(
 }
 
 fn signal_filter(
-    #[cfg_attr(not(feature = "reduced-motion"), expect(unused_variables))] interest: Interest,
+    #[cfg_attr(not(feature = "_gnome_only"), expect(unused_variables))] interest: Interest,
 ) -> &'static [(u8, &'static str)] {
-    #[cfg(feature = "reduced-motion")]
-    if interest.is(Interest::ReducedMotion) {
+    #[cfg(feature = "_gnome_only")]
+    if interest.is(Interest::GnomeOnly) {
         return &[];
     }
     &[(0, APPEARANCE)]
@@ -270,4 +290,16 @@ fn parse_enable_animation(value: Value) -> ReducedMotion {
         Ok(false) => ReducedMotion::Reduce,
         Ok(true) | Err(_) => ReducedMotion::NoPreference,
     }
+}
+
+// Stored as integer (milliseconds):
+// https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas/-/blob/6ad9aaea4dc2929770f2fdf9112280aa5081b6de/schemas/org.gnome.desktop.peripherals.gschema.xml.in#L139
+#[cfg(feature = "double-click-interval")]
+fn parse_double_click(value: Value) -> DoubleClickInterval {
+    // We can't directly convert value to u64 because the underlying value is an i32.
+    let value = i32::try_from(value)
+        .ok()
+        .and_then(|v| u64::try_from(v).ok())
+        .map(Duration::from_millis);
+    DoubleClickInterval(value)
 }

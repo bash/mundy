@@ -19,10 +19,6 @@
   * Windows: UISettings.TextScaleFactor
   * macOS: n/a
   * Web: n/a
-* Double click speed
-  * Windows: `GetDoubleClickTime`
-  * `org.gnome.desktop.peripherals.mouse double-click`. See: [question](https://discourse.gnome.org/t/what-should-i-use-to-get-the-double-click-time/19917)
-  * macOS: [NSEvent.doubleClickInterval](https://developer.apple.com/documentation/appkit/nsevent/1528384-doubleclickinterval)
 
 ## Prior Art
 ### libadwaita

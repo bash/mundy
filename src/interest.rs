@@ -59,6 +59,11 @@ impl_interest! {
         /// Retrieve the [`AccentColor`](`crate::AccentColor`) preference
         /// and store it in [`Preferences::accent_color`](`crate::Preferences::accent_color`).
         pub const AccentColor: Interest = Interest(1 << 4);
+
+        #[cfg(feature = "double-click-interval")]
+        /// Retrieve the [`DoubleClickInterval`](`crate::DoubleClickInterval`) preference
+        /// and store it in [`Preferences::double_click_interval`](`crate::Preferences::double_click_interval`).
+        pub const DoubleClickInterval: Interest = Interest(1 << 5);
     }
 }
 
@@ -79,6 +84,24 @@ impl Interest {
         #[cfg(feature = "reduced-transparency")]
         {
             value |= Interest::ReducedTransparency.0;
+        }
+        Interest(value)
+    };
+}
+
+#[cfg(target_os = "linux")]
+#[allow(non_upper_case_globals)]
+impl Interest {
+    #[cfg(feature = "_gnome_only")]
+    pub(crate) const GnomeOnly: Interest = {
+        let mut value = 0;
+        #[cfg(feature = "reduced-motion")]
+        {
+            value |= Interest::ReducedMotion.0;
+        }
+        #[cfg(feature = "double-click-interval")]
+        {
+            value |= Interest::DoubleClickInterval.0;
         }
         Interest(value)
     };

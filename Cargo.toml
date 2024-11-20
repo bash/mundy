@@ -78,6 +78,7 @@ accent-color = [
 double-click-interval = [
     "_gnome_only",
     "objc2-app-kit/NSEvent",
+    "windows/Win32_UI_Input_KeyboardAndMouse",
 ]
 _all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color", "double-click-interval"]
 _macos-accessibility = [

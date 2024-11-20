@@ -179,6 +179,7 @@ impls! {
         "reduced-motion" reduced_motion,
         "accent-color" accent_color,
         "reduced-transparency" reduced_transparency,
+        "double-click-interval" double_click_interval,
     };
 
     #[cfg(target_os = "macos")]
@@ -333,4 +334,5 @@ pub struct AccentColor(pub Option<Srgba>);
 pub struct DoubleClickInterval(pub Option<std::time::Duration>);
 
 // TODO: Windows also has a double click size:
+// https://github.com/dotnet/winforms/blob/7376e50c5a762131398992def2e76f4586fe5025/src/System.Windows.Forms/src/System/Windows/Forms/SystemInformation.cs#L263
 // https://github.com/dotnet/winforms/blob/7376e50c5a762131398992def2e76f4586fe5025/src/System.Windows.Forms/src/System/Windows/Forms/SystemInformation.cs#L263

@@ -30,7 +30,7 @@ futures-channel = { version = "0.3", optional = true }
 dispatch = { version = "0.2", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.58.0", features = ["UI_ViewManagement", "Win32_System_Com", "Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
+windows = { version = "0.58.0", features = ["Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
 futures-channel = "0.3"
 slab = "0.4.9"
 
@@ -57,15 +57,17 @@ tokio = ["zbus/tokio", "dep:tokio"]
 callback = ["dep:beul", "dep:futures-channel"]
 color-scheme = [
     "_macos-observable",
+    "_winrt",
     "dep:dispatch",
     "objc2-app-kit/NSAppearance",
     "objc2-foundation/NSKeyValueObserving",
 ]
-contrast = ["_macos-accessibility"]
-reduced-motion = ["_macos-accessibility", "_gnome_only"]
-reduced-transparency = ["_macos-accessibility"]
+contrast = ["_macos-accessibility", "_winrt"]
+reduced-motion = ["_macos-accessibility", "_gnome_only", "_winrt"]
+reduced-transparency = ["_macos-accessibility", "_winrt"]
 accent-color = [
     "_macos-observable",
+    "_winrt",
     "web-sys/Comment",
     "web-sys/CssStyleDeclaration",
     "web-sys/Document",
@@ -80,6 +82,7 @@ accent-color = [
 double-click-interval = [
     "_gnome_only",
     "objc2-app-kit/NSEvent",
+    "windows/Win32_UI_Input_KeyboardAndMouse",
 ]
 _all-preferences = ["color-scheme", "contrast", "reduced-motion", "reduced-transparency", "accent-color", "double-click-interval"]
 _macos-accessibility = [
@@ -89,6 +92,7 @@ _macos-accessibility = [
 ]
 _macos-observable = ["dep:futures-channel"]
 _gnome_only = []
+_winrt = ["windows/UI_ViewManagement", "windows/Win32_System_Com"]
 
 [workspace]
 resolver = "2"

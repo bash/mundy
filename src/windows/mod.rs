@@ -2,6 +2,8 @@
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]
 use crate::Contrast;
+#[cfg(feature = "double-click-interval")]
+use crate::DoubleClickInterval;
 #[cfg(feature = "reduced-motion")]
 use crate::ReducedMotion;
 #[cfg(feature = "reduced-transparency")]
@@ -9,6 +11,7 @@ use crate::ReducedTransparency;
 #[cfg(feature = "accent-color")]
 use crate::{AccentColor, Srgba};
 use crate::{AvailablePreferences, Interest};
+#[cfg(feature = "_winrt")]
 use com_thread::ComThreadGuard;
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
@@ -16,7 +19,12 @@ use hook::{register_windows_hook, WindowsHookGuard};
 use pin_project_lite::pin_project;
 use std::sync::mpsc as std_mpsc;
 use std::thread;
+#[cfg(feature = "double-click-interval")]
+use std::time::Duration;
+#[cfg(feature = "_winrt")]
 use windows::Win32::System::Com::COINIT_MULTITHREADED;
+#[cfg(feature = "double-click-interval")]
+use windows::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime;
 use windows::Win32::UI::WindowsAndMessaging::WM_SETTINGCHANGE;
 #[cfg(any(feature = "color-scheme", feature = "accent-color"))]
 use windows::UI::Color;
@@ -32,6 +40,7 @@ use windows::UI::ViewManagement::UIColorType;
 ))]
 use windows::UI::ViewManagement::UISettings;
 
+#[cfg(feature = "_winrt")]
 mod com_thread;
 mod hook;
 mod main_thread;
@@ -76,12 +85,12 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     }
 }
 
-#[cfg(feature = "log")]
+#[cfg(all(feature = "log", feature = "_winrt"))]
 fn log_init_error(error: windows::core::Error) {
     log::warn!("failed to initialize COM: {error}");
 }
 
-#[cfg(not(feature = "log"))]
+#[cfg(all(not(feature = "log"), feature = "_winrt"))]
 fn log_init_error(_error: windows::core::Error) {}
 
 fn com_thread(
@@ -90,6 +99,7 @@ fn com_thread(
     msg_rx: std_mpsc::Receiver<Message>,
     interest: Interest,
 ) {
+    #[cfg(feature = "_winrt")]
     let _guard = match ComThreadGuard::new(COINIT_MULTITHREADED) {
         Ok(g) => g,
         Err(error) => {
@@ -168,7 +178,10 @@ enum Message {
     WM_SETTINGCHANGE,
 }
 
-fn read_preferences(settings: &Settings, interest: Interest) -> AvailablePreferences {
+fn read_preferences(
+    #[cfg_attr(not(feature = "_winrt"), allow(unused_variables))] settings: &Settings,
+    interest: Interest,
+) -> AvailablePreferences {
     let mut preferences = AvailablePreferences::default();
 
     #[cfg(feature = "color-scheme")]
@@ -206,9 +219,15 @@ fn read_preferences(settings: &Settings, interest: Interest) -> AvailablePrefere
         }
     }
 
+    #[cfg(feature = "double-click-interval")]
+    if interest.is(Interest::DoubleClickInterval) {
+        preferences.double_click_interval = read_double_click_time();
+    }
+
     preferences
 }
 
+#[cfg(feature = "_winrt")]
 macro_rules! try_settings_result {
     ($result:expr) => {
         match $result {
@@ -281,4 +300,10 @@ fn read_reduced_transparency(settings: &UISettings) -> ReducedTransparency {
     } else {
         ReducedTransparency::Reduce
     }
+}
+
+#[cfg(feature = "double-click-interval")]
+fn read_double_click_time() -> DoubleClickInterval {
+    let millis = unsafe { GetDoubleClickTime() };
+    DoubleClickInterval(Some(Duration::from_millis(millis as u64)))
 }

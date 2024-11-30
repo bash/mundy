@@ -2,6 +2,8 @@
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]
 use crate::Contrast;
+#[cfg(feature = "double-click-interval")]
+use crate::DoubleClickInterval;
 #[cfg(feature = "reduced-motion")]
 use crate::ReducedMotion;
 #[cfg(feature = "reduced-transparency")]
@@ -16,7 +18,11 @@ use hook::{register_windows_hook, WindowsHookGuard};
 use pin_project_lite::pin_project;
 use std::sync::mpsc as std_mpsc;
 use std::thread;
+#[cfg(feature = "double-click-interval")]
+use std::time::Duration;
 use windows::Win32::System::Com::COINIT_MULTITHREADED;
+#[cfg(feature = "double-click-interval")]
+use windows::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime;
 use windows::Win32::UI::WindowsAndMessaging::WM_SETTINGCHANGE;
 #[cfg(any(feature = "color-scheme", feature = "accent-color"))]
 use windows::UI::Color;
@@ -206,6 +212,11 @@ fn read_preferences(settings: &Settings, interest: Interest) -> AvailablePrefere
         }
     }
 
+    #[cfg(feature = "double-click-interval")]
+    if interest.is(Interest::DoubleClickInterval) {
+        preferences.double_click_interval = read_double_click_time();
+    }
+
     preferences
 }
 
@@ -281,4 +292,10 @@ fn read_reduced_transparency(settings: &UISettings) -> ReducedTransparency {
     } else {
         ReducedTransparency::Reduce
     }
+}
+
+#[cfg(feature = "double-click-interval")]
+fn read_double_click_time() -> DoubleClickInterval {
+    let millis = unsafe { GetDoubleClickTime() };
+    DoubleClickInterval(Some(Duration::from_millis(millis as u64)))
 }

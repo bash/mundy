@@ -7,11 +7,12 @@ Your friendly neighbourhood ~~whale~~ crate for reading various system-level
 accessibility and UI preferences across platforms 🐋
 
 The following preferences are supported:
-* `AccentColor`—The user's current system wide accent color preference.
-* `ColorScheme`—The user's preference for either light or dark mode.
-* `Contrast`—The user's preferred contrast level.
-* `ReducedMotion`—The user's reduced motion preference.
-* `ReducedTransparency`—The user's reduced transparency preference.
+* [`AccentColor`](https://docs.rs/mundy/latest/mundy/struct.AccentColor.html)—The user's current system wide accent color preference.
+* [`ColorScheme`](https://docs.rs/mundy/latest/mundy/enum.ColorScheme.html)—The user's preference for either light or dark mode.
+* [`Contrast`](https://docs.rs/mundy/latest/mundy/enum.Contrast.html)—The user's preferred contrast level.
+* [`ReducedMotion`](https://docs.rs/mundy/latest/mundy/enum.ReducedMotion.html)—The user's reduced motion preference.
+* [`ReducedTransparency`](https://docs.rs/mundy/latest/mundy/enum.ReducedTransparency.html)—The user's reduced transparency preference.
+* [`DoubleClickInterval`](https://docs.rs/mundy/latest/mundy/struct.DoubleClickInterval.html)—The maximum amount of time allowed between the first and second click.
 
 ## Example
 ```rust,no_run

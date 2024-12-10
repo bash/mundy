@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.4
+* ✨ Add support for reading the double click interval preference.
+
 ## 0.1.3
 * ⬆️  Update `bevy_color` to 0.15
 

@@ -1,4 +1,6 @@
 # Changelog
+## 0.1.5
+* ⬆️  Update `epaint` to 0.30
 
 ## 0.1.4
 * ✨ Add support for reading the double click interval preference.

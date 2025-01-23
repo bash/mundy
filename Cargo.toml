@@ -92,7 +92,9 @@ _macos-accessibility = [
 ]
 _macos-observable = ["dep:futures-channel"]
 _gnome_only = []
-_winrt = ["windows/UI_ViewManagement", "windows/Win32_System_Com"]
+# the deprecated feature is here as a workaround for <https://github.com/microsoft/windows-rs/issues/3425>
+# FIXME: remove workaround when updating windows
+_winrt = ["windows/UI_ViewManagement", "windows/Win32_System_Com", "windows/deprecated"]
 
 [workspace]
 resolver = "2"

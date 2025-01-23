@@ -22,7 +22,7 @@ use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 #[cfg(any(feature = "accent-color", feature = "_macos-accessibility"))]
 use objc2::sel;
-use objc2::{declare_class, msg_send_id, mutability, ClassType, DeclaredClass};
+use objc2::{define_class, msg_send, AllocAnyThread as _, DeclaredClass};
 #[cfg(feature = "color-scheme")]
 use objc2_app_kit::NSAppearance;
 use objc2_app_kit::NSApplication;
@@ -69,8 +69,7 @@ impl Observer {
                 application.addObserver_forKeyPath_options_context(
                     &observer,
                     effective_appearance_key(),
-                    NSKeyValueObservingOptions::NSKeyValueObservingOptionNew
-                        | NSKeyValueObservingOptions::NSKeyValueObservingOptionOld,
+                    NSKeyValueObservingOptions::New | NSKeyValueObservingOptions::Old,
                     ptr::null_mut(),
                 );
             }
@@ -116,7 +115,7 @@ impl Observer {
     fn new(sender: mpsc::UnboundedSender<Preference>) -> Retained<Observer> {
         let observer = Observer::alloc().set_ivars(Ivars { sender });
         // SAFETY: Our instance is allocated and the instance vars are set.
-        unsafe { msg_send_id![super(observer), init] }
+        unsafe { msg_send![super(observer), init] }
     }
 }
 
@@ -155,31 +154,24 @@ impl Drop for ObserverRegistration {
     }
 }
 
-declare_class! {
+define_class! {
+    // SAFETY:
+    // - The superclass NSObject does not have any subclassing requirements.
+    // - `MyCustomObject` does not implement `Drop`.
+    #[unsafe(super(NSObject))]
+    #[name = "MundyObserver"]
+    #[ivars = Ivars]
     pub(crate) struct Observer;
 
-    // SAFETY:
-    // * The superclass NSObject does not have any subclassing requirements.
-    // * Interior mutability is a safe default.
-    unsafe impl ClassType for Observer {
-        type Super = NSObject;
-        type Mutability = mutability::InteriorMutable;
-        const NAME: &'static str = "MundyObserver";
-    }
-
-    impl DeclaredClass for Observer {
-        type Ivars = Ivars;
-    }
-
-    unsafe impl Observer {
+    impl Observer {
         #[cfg(feature = "accent-color")]
-        #[method(systemColorsDidChange)]
+        #[unsafe(method(systemColorsDidChange))]
         fn system_colors_did_change(&self) {
             _ = self.ivars().sender.unbounded_send(Preference::AccentColor(get_accent_color()));
         }
 
         #[cfg(feature = "_macos-accessibility")]
-        #[method(accessibilityDisplayOptionsDidChange)]
+        #[unsafe(method(accessibilityDisplayOptionsDidChange))]
         fn accessibility_options_did_change(&self) {
             let mut prefs = AccessibilityPreferences::default();
             #[cfg(feature = "contrast")]
@@ -198,7 +190,7 @@ declare_class! {
         }
 
         #[cfg(feature = "color-scheme")]
-        #[method(observeValueForKeyPath:ofObject:change:context:)]
+        #[unsafe(method(observeValueForKeyPath:ofObject:change:context:))]
         fn observe_value(
             &self,
             key_path: Option<&NSString>,
@@ -209,27 +201,13 @@ declare_class! {
         {
             if key_path == Some(effective_appearance_key()) {
                 let change = change.expect("requested a change dictionary in `addObserver`, but none was provided");
-                let new = change.get(unsafe { NSKeyValueChangeNewKey }).expect("requested change dictionary did not contain `NSKeyValueChangeNewKey`");
-                // SAFETY: The value of `effectiveAppearance` is `NSAppearance`
-                let new: &NSAppearance = unsafe { &*(new as *const AnyObject).cast() };
+                let new = change.objectForKey(unsafe { NSKeyValueChangeNewKey }).expect("requested change dictionary did not contain `NSKeyValueChangeNewKey`");
+                let new: &NSAppearance = new.downcast_ref().expect("effectiveAppearance is NSAppearance");
                 _ = self.ivars().sender.unbounded_send(Preference::ColorScheme(to_color_scheme(new)));
             }
         }
     }
 }
-
-// SAFETY:
-// * `NSObject` (the super class) is thread-safe.
-// * The ivars are Send and Sync.
-// See: https://github.com/madsmtm/objc2/issues/634
-unsafe impl Send for Observer {}
-
-// SAFETY:
-// * `NSObject` (the super class) is thread-safe.
-// * The ivars are Send and Sync.
-// See: https://github.com/madsmtm/objc2/issues/634
-// TODO: review this
-unsafe impl Sync for Observer {}
 
 #[derive(Clone)]
 pub(crate) struct Ivars {

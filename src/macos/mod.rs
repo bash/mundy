@@ -31,7 +31,7 @@ use objc2_app_kit::{NSAppearance, NSAppearanceNameAqua, NSAppearanceNameDarkAqua
 use objc2_app_kit::{NSColor, NSColorSpace};
 use objc2_foundation::MainThreadMarker;
 #[cfg(feature = "color-scheme")]
-use objc2_foundation::{NSArray, NSCopying as _};
+use objc2_foundation::NSArray;
 #[cfg(feature = "_macos-observable")]
 use observer::{Observer, ObserverRegistration};
 use pin_project_lite::pin_project;
@@ -166,7 +166,7 @@ fn get_shared_workspace() -> Retained<NSWorkspace> {
 fn to_color_scheme(appearance: &NSAppearance) -> ColorScheme {
     let light = unsafe { NSAppearanceNameAqua };
     let dark = unsafe { NSAppearanceNameDarkAqua };
-    let names = NSArray::from_id_slice(&[light.copy(), dark.copy()]);
+    let names = NSArray::from_slice(&[light, dark]);
 
     match appearance.bestMatchFromAppearancesWithNames(&names) {
         Some(best_match) if &*best_match == dark => ColorScheme::Dark,

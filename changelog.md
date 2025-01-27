@@ -1,4 +1,7 @@
 # Changelog
+## 0.1.6
+* ⬆️  Update `objc2` to 0.6
+
 ## 0.1.5
 * ⬆️  Update `epaint` to 0.30
 

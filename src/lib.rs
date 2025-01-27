@@ -82,6 +82,7 @@ mod stream_utils;
 /// * `reduced-motion`—Enable support for [`ReducedMotion`] (*default*).
 /// * `reduced-transparency`—Enable support for [`ReducedTransparency`] (*default*).
 /// * `accent-color`—Enable support for [`AccentColor`] (*default*).
+/// * `double-click-interval`—Enable support for [`DoubleClickInterval`] (*default*).
 /// * (Linux) `async-io`—Use `zbus` with `async-io` (*default*).
 /// * (Linux) `tokio`—Use `zbus` with `tokio` instead of `async-io`.
 #[cfg(doc)]

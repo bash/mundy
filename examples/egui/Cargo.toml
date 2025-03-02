@@ -6,10 +6,10 @@ publish = false
 
 [dependencies]
 bevy_color.workspace = true
-eframe = "0.30.0"
-egui-theme-switch = "0.2.3"
-egui_demo_lib = "0.30.0"
-egui_extras = "0.30.0"
+eframe = "0.31.0"
+egui-theme-switch = "0.3.0"
+egui_demo_lib = "0.31.0"
+egui_extras = "0.31.0"
 mundy = { path = "../..", features = ["epaint", "bevy_color"] }
 log = "0.4"
 

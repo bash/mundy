@@ -1,4 +1,8 @@
 # Changelog
+## 0.1.7
+* ⬆️  Update `windows` to 0.60
+* ⬆️  Update `epaint` to 0.31
+
 ## 0.1.6
 * ⬆️  Update `objc2` to 0.6
 

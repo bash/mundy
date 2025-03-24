@@ -1,4 +1,7 @@
 # Changelog
+## 0.1.8
+* ⬆️ Update `windows` to 0.61
+
 ## 0.1.7
 * ⬆️  Update `windows` to 0.60
 * ⬆️  Update `epaint` to 0.31

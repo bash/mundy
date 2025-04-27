@@ -11,7 +11,7 @@ categories = ["os", "gui"]
 readme = "readme.md"
 
 [workspace.dependencies]
-bevy_color = { version = "0.15.0", default-features = false }
+bevy_color = { version = "0.16.1", default-features = false, features = ["std"] }
 
 [dependencies]
 cfg-if = "1.0.0"

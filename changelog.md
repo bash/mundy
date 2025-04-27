@@ -1,4 +1,7 @@
 # Changelog
+## 0.1.9
+* Update `bevy_color` to 0.16
+
 ## 0.1.8
 * ⬆️ Update `windows` to 0.61
 

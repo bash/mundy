@@ -2101,7 +2101,7 @@ dependencies = [
 
 [[package]]
 name = "mundy"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "async-io",
  "beul",

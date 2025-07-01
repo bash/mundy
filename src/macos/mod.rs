@@ -37,7 +37,6 @@ use observer::{Observer, ObserverRegistration};
 use pin_project_lite::pin_project;
 #[cfg(feature = "_macos-observable")]
 use preference::Preference;
-#[cfg(feature = "double-click-interval")]
 use std::time::Duration;
 
 #[cfg(feature = "color-scheme")]
@@ -72,6 +71,13 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
         #[cfg(feature = "_macos-observable")]
         _observer: observer,
     }
+}
+
+pub(crate) fn once_blocking(
+    _interest: Interest,
+    _timeout: Duration,
+) -> Option<AvailablePreferences> {
+    todo!()
 }
 
 #[cfg(feature = "_macos-observable")]

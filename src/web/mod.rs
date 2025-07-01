@@ -16,6 +16,7 @@ use event_listener::EventListenerGuard;
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
 use pin_project_lite::pin_project;
+use std::time::Duration;
 use web_sys::window;
 
 #[cfg(feature = "accent-color")]
@@ -145,6 +146,13 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
             .chain(changes(preferences, receiver))
             .boxed(),
     }
+}
+
+pub(crate) fn once_blocking(
+    _interest: Interest,
+    _timeout: Duration,
+) -> Option<AvailablePreferences> {
+    todo!()
 }
 
 fn changes(

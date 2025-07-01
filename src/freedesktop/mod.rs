@@ -8,12 +8,13 @@ use crate::DoubleClickInterval;
 use crate::ReducedMotion;
 #[cfg(feature = "accent-color")]
 use crate::{AccentColor, Srgba};
-#[cfg(feature = "double-click-interval")]
-use std::time::Duration;
 
+use crate::async_rt::block_on;
 use crate::stream_utils::{Left, Right, Scan};
 use crate::{AvailablePreferences, Interest};
-use futures_lite::{stream, Stream, StreamExt as _};
+use cfg_if::cfg_if;
+use futures_lite::{stream, FutureExt as _, Stream, StreamExt as _};
+use std::time::Duration;
 use zbus::{
     proxy::SignalStream,
     zvariant::{OwnedValue, Value},
@@ -64,6 +65,24 @@ pub(crate) type PreferencesStream = stream::Boxed<AvailablePreferences>;
 
 pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     preferences_stream(interest).boxed()
+}
+
+pub(crate) fn once_blocking(interest: Interest, timeout: Duration) -> Option<AvailablePreferences> {
+    block_on(stream(interest).next().or(timer(timeout)))
+}
+
+cfg_if! {
+    if #[cfg(feature = "tokio")] {
+        async fn timer<T>(duration: Duration) -> Option<T> {
+            tokio::time::sleep(duration).await;
+            None
+        }
+    } else if #[cfg(feature = "async-io")] {
+        async fn timer<T>(duration: Duration) -> Option<T> {
+            async_io::Timer::after(duration).await;
+            None
+        }
+    }
 }
 
 fn preferences_stream(interest: Interest) -> impl Stream<Item = AvailablePreferences> {

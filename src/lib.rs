@@ -63,7 +63,6 @@ use stream_utils::Dedup;
 mod impls;
 mod interest;
 pub use interest::*;
-#[cfg(feature = "callback")]
 mod async_rt;
 #[cfg(feature = "callback")]
 mod callback;
@@ -73,6 +72,7 @@ pub use callback::*;
 mod color;
 #[cfg(feature = "accent-color")]
 pub use color::*;
+mod once_blocking;
 mod stream_utils;
 
 /// # Feature Flags

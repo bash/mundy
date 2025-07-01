@@ -19,7 +19,6 @@ use hook::{register_windows_hook, WindowsHookGuard};
 use pin_project_lite::pin_project;
 use std::sync::mpsc as std_mpsc;
 use std::thread;
-#[cfg(feature = "double-click-interval")]
 use std::time::Duration;
 #[cfg(feature = "_winrt")]
 use windows::Win32::System::Com::COINIT_MULTITHREADED;
@@ -83,6 +82,13 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
         _shutdown: shutdown,
         inner: receiver.boxed(),
     }
+}
+
+pub(crate) fn once_blocking(
+    _interest: Interest,
+    _timeout: Duration,
+) -> Option<AvailablePreferences> {
+    todo!()
 }
 
 #[cfg(all(feature = "log", feature = "_winrt"))]

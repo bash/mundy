@@ -5,5 +5,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
-winit = "0.30.5"
+winit = "0.30.10"
 mundy = { path = "../../" }

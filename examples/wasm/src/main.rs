@@ -12,12 +12,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let window = window().expect("should be called from main thread");
     let document = window.document().expect("document is missing");
     let body = document.body().expect("body is missing");
-    let color_scheme: HtmlElement = get_output_element(&body, "#color-scheme");
-    let contrast: HtmlElement = get_output_element(&body, "#contrast");
-    let reduced_motion: HtmlElement = get_output_element(&body, "#reduced-motion");
-    let reduced_transparency: HtmlElement = get_output_element(&body, "#reduced-transparency");
-    let accent_color: HtmlElement = get_output_element(&body, "#accent-color");
-    let accent_color_sample: HtmlElement = get_output_element(&body, "#accent-color-sample");
+    let color_scheme = get_output_element(&body, "#color-scheme");
+    let contrast = get_output_element(&body, "#contrast");
+    let reduced_motion = get_output_element(&body, "#reduced-motion");
+    let reduced_transparency = get_output_element(&body, "#reduced-transparency");
+    let accent_color = get_output_element(&body, "#accent-color");
+    let accent_color_sample = get_output_element(&body, "#accent-color-sample");
 
     let mut stream = Preferences::stream(Interest::All);
     while let Some(preferences) = stream.next().await {

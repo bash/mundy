@@ -19,6 +19,10 @@
 //! * [`ReducedTransparency`]—The user's reduced transparency preference.
 //! * [`DoubleClickInterval`]—The maximum amount of time allowed between the first and second click.
 //!
+//! Note that each preference has a corresponding [feature flag](`feature_flags`).
+//! By turning off [default features](https://doc.rust-lang.org/cargo/reference/features.html#the-default-feature)
+//! you will only "pay" for what you actually need.
+//!
 //! ## Example
 //! The easiest way to get the preferences is to use the
 //! [`Preferences::stream`] function to create a stream that is continually
@@ -85,6 +89,11 @@ mod stream_utils;
 /// * `double-click-interval`—Enable support for [`DoubleClickInterval`] (*default*).
 /// * (Linux) `async-io`—Use `zbus` with `async-io` (*default*).
 /// * (Linux) `tokio`—Use `zbus` with `tokio` instead of `async-io`.
+///
+/// ## Turning Off Default Features
+///
+/// If you turn off [default features](https://doc.rust-lang.org/cargo/reference/features.html#the-default-feature),
+/// you will have to pick between one of the two available async runtimes `async-io` and `tokio` to enable.
 #[cfg(doc)]
 #[cfg_attr(docsrs, doc(cfg(doc)))]
 pub mod feature_flags {}

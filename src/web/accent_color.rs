@@ -35,6 +35,14 @@ impl AccentColorObserver {
     }
 }
 
+pub(crate) fn get_accent_color(window: &Window) -> Option<AccentColor> {
+    if !supports_accent_color() {
+        return None;
+    }
+    let element = create_element(window)?;
+    Some(get_accent_color_from_computed_style(window, &element.0))
+}
+
 fn supports_accent_color() -> bool {
     css::supports("color: AccentColor").unwrap_or_default()
 }

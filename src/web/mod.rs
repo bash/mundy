@@ -10,6 +10,7 @@ use crate::ReducedMotion;
 use crate::ReducedTransparency;
 
 use crate::stream_utils::Scan;
+use crate::web::accent_color::get_accent_color;
 use crate::{AvailablePreferences, Interest};
 use drop_on_main_thread::DropOnMainThread;
 use event_listener::EventListenerGuard;
@@ -153,10 +154,39 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
 }
 
 pub(crate) fn once_blocking(
-    _interest: Interest,
+    interest: Interest,
     _timeout: Duration,
 ) -> Option<AvailablePreferences> {
-    todo!()
+    let Some(window) = window() else {
+        #[cfg(feature = "log")]
+        log::warn!("tried to read preferences from non-main thread");
+        return Some(AvailablePreferences::default());
+    };
+
+    let mut preferences = AvailablePreferences::default();
+
+    #[cfg(feature = "color-scheme")]
+    if interest.is(Interest::ColorScheme) {
+        if let Some(color_scheme) = color_scheme_media_query(&window).map(|q| q.value()) {
+            preferences.color_scheme = color_scheme;
+        }
+    }
+
+    #[cfg(feature = "contrast")]
+    if interest.is(Interest::Contrast) {
+        if let Some(contrast) = contrast_media_query(&window).map(|q| q.value()) {
+            preferences.contrast = contrast;
+        }
+    }
+
+    #[cfg(feature = "accent-color")]
+    if interest.is(Interest::AccentColor) {
+        if let Some(accent_color) = get_accent_color(&window) {
+            preferences.accent_color = accent_color;
+        }
+    }
+
+    Some(preferences)
 }
 
 fn changes(

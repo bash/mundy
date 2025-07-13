@@ -1,51 +1,96 @@
 use super::drop_on_main_thread::DropOnMainThread;
 use super::event_listener::{EventListenerGuard, EventTargetExt as _};
-use web_sys::{MediaQueryListEvent, Window};
+use web_sys::{MediaQueryList, MediaQueryListEvent, Window};
 
 /// Generates a media query function for a media query
 /// with multiple values (e.g. `prefers-contrast`).
 /// It's future proof to addition of new keywords (i.e. it treats such new values as no preference).
 macro_rules! multi_value_media_query {
     ($name:ident -> $ty:ty { $($query:literal => $value:expr,)* _ => $default:expr $(,)? }) => {
-        fn $name(
-            window: &web_sys::Window,
-            callback: impl FnMut($ty) + Clone + 'static,
-        ) -> Option<(Vec<DropOnMainThread<EventListenerGuard>>, $ty)> {
-            use $crate::web::multi_value::single_value_media_query;
-
-            let mut guards = Vec::new();
-            let mut initial_value = $default;
-
-            $(
-                let (guard, v) = single_value_media_query(window, $query, $value, callback.clone())?;
-                if let Some(v) = v { initial_value = v; }
-                guards.push(guard);
-            )*
+        fn $name(window: &web_sys::Window) -> Option<$crate::web::multi_value::MultiValueMediaQuery<'_, $ty>> {
+            use $crate::web::multi_value::{SingleValueMediaQuery, MultiValueMediaQuery};
 
             // We don't use "no-preference" here. Instead we use a logical combination of all the values
             // we know. That way when the standard adds a new value, we treat it as no-preference.
             const NO_PREFERENCE: &str = concat!("all", $(" and (not ", $query, ")"),*);
-            guards.push(single_value_media_query(window, NO_PREFERENCE, $default, callback)?.0);
 
-            Some((guards, initial_value))
+            let queries = vec![
+                $(
+                    SingleValueMediaQuery::new(window, $query, $value)?,
+                )*
+            ];
+
+            Some(MultiValueMediaQuery::new($default, queries))
         }
     };
 }
 
+pub(crate) struct MultiValueMediaQuery<'a, T> {
+    default: T,
+    queries: Vec<SingleValueMediaQuery<'a, T>>,
+}
+
+impl<'a, T> MultiValueMediaQuery<'a, T>
+where
+    T: 'static + Copy,
+{
+    #[doc(hidden)]
+    pub(crate) fn new(default: T, queries: Vec<SingleValueMediaQuery<'a, T>>) -> Self {
+        Self { default, queries }
+    }
+
+    pub(crate) fn value(&self) -> T {
+        self.queries
+            .iter()
+            .filter_map(|q| q.value())
+            .next()
+            .unwrap_or(self.default)
+    }
+
+    pub(crate) fn subscribe(
+        self,
+        callback: impl FnMut(T) + Clone + 'static,
+    ) -> Option<Vec<DropOnMainThread<EventListenerGuard>>> {
+        self.queries
+            .into_iter()
+            .map(|q| q.subscribe(callback.clone()))
+            .collect()
+    }
+}
+
 #[doc(hidden)]
-pub(crate) fn single_value_media_query<T: Copy + 'static>(
-    window: &Window,
-    query: &str,
+pub(crate) struct SingleValueMediaQuery<'a, T> {
+    window: &'a Window,
+    query: MediaQueryList,
     value: T,
-    mut callback: impl FnMut(T) + Clone + 'static,
-) -> Option<(DropOnMainThread<EventListenerGuard>, Option<T>)> {
-    let media_query = window.match_media(query).ok().flatten()?;
-    let listener = move |event: MediaQueryListEvent| {
-        if event.matches() {
-            callback(value);
-        }
-    };
-    let guard = media_query.add_event_listener("change", listener).ok()?;
-    let initial_value = media_query.matches().then_some(value);
-    Some((DropOnMainThread::new(guard, window), initial_value))
+}
+
+impl<'a, T> SingleValueMediaQuery<'a, T>
+where
+    T: Copy + 'static,
+{
+    pub(crate) fn new(window: &'a Window, query: &str, value: T) -> Option<Self> {
+        Some(Self {
+            window,
+            value,
+            query: window.match_media(query).ok().flatten()?,
+        })
+    }
+
+    pub(crate) fn value(&self) -> Option<T> {
+        self.query.matches().then_some(self.value)
+    }
+
+    pub(crate) fn subscribe(
+        self,
+        mut callback: impl FnMut(T) + Clone + 'static,
+    ) -> Option<DropOnMainThread<EventListenerGuard>> {
+        let listener = move |event: MediaQueryListEvent| {
+            if event.matches() {
+                callback(self.value);
+            }
+        };
+        let guard = self.query.add_event_listener("change", listener).ok()?;
+        Some(DropOnMainThread::new(guard, self.window))
+    }
 }

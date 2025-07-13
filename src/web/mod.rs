@@ -103,22 +103,26 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     #[cfg(feature = "color-scheme")]
     if interest.is(Interest::ColorScheme) {
         let sender = sender.clone();
-        if let Some((guards_, value)) = color_scheme_media_query(&window, move |v| {
-            _ = sender.unbounded_send(Preference::ColorScheme(v))
-        }) {
-            guards.extend(guards_);
-            preferences.color_scheme = value;
+        if let Some(query) = color_scheme_media_query(&window) {
+            preferences.color_scheme = query.value();
+            if let Some(guards_) =
+                query.subscribe(move |v| _ = sender.unbounded_send(Preference::ColorScheme(v)))
+            {
+                guards.extend(guards_);
+            }
         }
     }
 
     #[cfg(feature = "contrast")]
     if interest.is(Interest::Contrast) {
         let sender = sender.clone();
-        if let Some((guards_, value)) = contrast_media_query(&window, move |v| {
-            _ = sender.unbounded_send(Preference::Contrast(v))
-        }) {
-            guards.extend(guards_);
-            preferences.contrast = value;
+        if let Some(query) = contrast_media_query(&window) {
+            preferences.contrast = query.value();
+            if let Some(guards_) =
+                query.subscribe(move |v| _ = sender.unbounded_send(Preference::Contrast(v)))
+            {
+                guards.extend(guards_);
+            }
         }
     }
 

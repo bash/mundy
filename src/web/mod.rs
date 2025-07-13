@@ -10,7 +10,6 @@ use crate::ReducedMotion;
 use crate::ReducedTransparency;
 
 use crate::stream_utils::Scan;
-use crate::web::accent_color::get_accent_color;
 use crate::{AvailablePreferences, Interest};
 use drop_on_main_thread::DropOnMainThread;
 use event_listener::EventListenerGuard;
@@ -74,30 +73,26 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     #[cfg(feature = "reduced-motion")]
     if interest.is(Interest::ReducedMotion) {
         let sender = sender.clone();
-        if let Some((guard, value)) = bool::boolean_media_query(
-            &window,
-            "(prefers-reduced-motion: reduce)",
-            ReducedMotion::Reduce,
-            ReducedMotion::NoPreference,
-            move |v| _ = sender.unbounded_send(Preference::ReducedMotion(v)),
-        ) {
-            guards.push(guard);
-            preferences.reduced_motion = value;
+        if let Some(query) = prefers_reduced_motion_query(&window) {
+            preferences.reduced_motion = query.value();
+            if let Some(guard) =
+                query.subscribe(move |v| _ = sender.unbounded_send(Preference::ReducedMotion(v)))
+            {
+                guards.push(guard);
+            }
         }
     }
 
     #[cfg(feature = "reduced-transparency")]
     if interest.is(Interest::ReducedTransparency) {
         let sender = sender.clone();
-        if let Some((guard, value)) = bool::boolean_media_query(
-            &window,
-            "(prefers-reduced-transparency: reduce)",
-            ReducedTransparency::Reduce,
-            ReducedTransparency::NoPreference,
-            move |v| _ = sender.unbounded_send(Preference::ReducedTransparency(v)),
-        ) {
-            guards.push(guard);
-            preferences.reduced_transparency = value;
+        if let Some(query) = prefers_reduced_transparency_query(&window) {
+            preferences.reduced_transparency = query.value();
+            if let Some(guard) = query
+                .subscribe(move |v| _ = sender.unbounded_send(Preference::ReducedTransparency(v)))
+            {
+                guards.push(guard);
+            }
         }
     }
 
@@ -165,24 +160,38 @@ pub(crate) fn once_blocking(
 
     let mut preferences = AvailablePreferences::default();
 
+    #[cfg(feature = "reduced-motion")]
+    if interest.is(Interest::ReducedMotion) {
+        if let Some(value) = prefers_reduced_motion_query(&window).map(|q| q.value()) {
+            preferences.reduced_motion = value;
+        }
+    }
+
+    #[cfg(feature = "reduced-transparency")]
+    if interest.is(Interest::ReducedTransparency) {
+        if let Some(value) = prefers_reduced_transparency_query(&window).map(|q| q.value()) {
+            preferences.reduced_transparency = value;
+        }
+    }
+
     #[cfg(feature = "color-scheme")]
     if interest.is(Interest::ColorScheme) {
-        if let Some(color_scheme) = color_scheme_media_query(&window).map(|q| q.value()) {
-            preferences.color_scheme = color_scheme;
+        if let Some(value) = color_scheme_media_query(&window).map(|q| q.value()) {
+            preferences.color_scheme = value;
         }
     }
 
     #[cfg(feature = "contrast")]
     if interest.is(Interest::Contrast) {
-        if let Some(contrast) = contrast_media_query(&window).map(|q| q.value()) {
-            preferences.contrast = contrast;
+        if let Some(value) = contrast_media_query(&window).map(|q| q.value()) {
+            preferences.contrast = value;
         }
     }
 
     #[cfg(feature = "accent-color")]
     if interest.is(Interest::AccentColor) {
-        if let Some(accent_color) = get_accent_color(&window) {
-            preferences.accent_color = accent_color;
+        if let Some(value) = accent_color::get_accent_color(&window) {
+            preferences.accent_color = value;
         }
     }
 
@@ -229,6 +238,30 @@ impl Preference {
         };
         preferences
     }
+}
+
+#[cfg(feature = "reduced-transparency")]
+fn prefers_reduced_transparency_query(
+    window: &web_sys::Window,
+) -> Option<bool::BooleanMediaQuery<'_, ReducedTransparency>> {
+    bool::BooleanMediaQuery::new(
+        window,
+        "(prefers-reduced-transparency: reduce)",
+        ReducedTransparency::Reduce,
+        ReducedTransparency::NoPreference,
+    )
+}
+
+#[cfg(feature = "reduced-motion")]
+fn prefers_reduced_motion_query(
+    window: &web_sys::Window,
+) -> Option<bool::BooleanMediaQuery<'_, ReducedMotion>> {
+    bool::BooleanMediaQuery::new(
+        window,
+        "(prefers-reduced-motion: reduce)",
+        ReducedMotion::Reduce,
+        ReducedMotion::NoPreference,
+    )
 }
 
 #[cfg(feature = "contrast")]

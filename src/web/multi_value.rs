@@ -18,6 +18,7 @@ macro_rules! multi_value_media_query {
                 $(
                     SingleValueMediaQuery::new(window, $query, $value)?,
                 )*
+                SingleValueMediaQuery::new(window, NO_PREFERENCE, $default)?,
             ];
 
             Some(MultiValueMediaQuery::new($default, queries))

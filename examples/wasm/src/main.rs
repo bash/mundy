@@ -1,13 +1,19 @@
 use futures_util::StreamExt as _;
-use log::Level;
+use log::{info, Level};
 use mundy::{Interest, Preferences};
 use std::error::Error;
+use std::time::Duration;
 use wasm_bindgen::prelude::*;
 use web_sys::{window, HtmlElement};
 
 #[wasm_bindgen(main)]
 async fn main() -> Result<(), Box<dyn Error>> {
     console_log::init_with_level(Level::Debug)?;
+
+    info!(
+        "preferences retrieved with once_blocking: {:#?}",
+        Preferences::once_blocking(Interest::All, Duration::ZERO)
+    );
 
     let window = window().expect("should be called from main thread");
     let document = window.document().expect("document is missing");

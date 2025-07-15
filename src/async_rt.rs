@@ -1,6 +1,5 @@
-use cfg_if::cfg_if;
-
-cfg_if! {
+#[cfg(any(feature = "callback", target_os = "linux"))]
+cfg_if::cfg_if! {
     if #[cfg(all(feature = "tokio", target_os = "linux"))] {
         #[allow(dead_code)]
         pub(crate) fn block_on<F>(future: F) -> F::Output
@@ -33,7 +32,7 @@ cfg_if! {
 }
 
 #[cfg(feature = "callback")]
-cfg_if! {
+cfg_if::cfg_if! {
     if #[cfg(all(target_family = "wasm", target_os = "unknown"))] {
         pub(crate) fn spawn_future(future: impl std::future::Future<Output = ()> + Send + 'static) {
             wasm_bindgen_futures::spawn_local(future);

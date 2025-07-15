@@ -78,7 +78,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     let (sender, receiver) = mpsc::unbounded();
     thread::Builder::new()
         .name(format!("{} COM thread", env!("CARGO_PKG_NAME")))
-        .spawn(move || com_thread(sender, message_tx, message_rx, interest))
+        .spawn(move || stream_in_com_thread(sender, message_tx, message_rx, interest))
         .expect("failed to spawn thread");
     PreferencesStream {
         _shutdown: shutdown,
@@ -87,17 +87,21 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
 }
 
 pub(crate) fn once_blocking(
-    _interest: Interest,
+    interest: Interest,
     _timeout: Duration,
 ) -> Option<AvailablePreferences> {
-    thread::Builder::new()
-        .name(format!("{} COM thread", env!("CARGO_PKG_NAME")))
-        .spawn(move || todo!())
-        .expect("failed to spawn thread")
-        .join()
-        .inspect_err(log_thread_join_err)
-        .ok()
-        .flatten()
+    Some(
+        thread::Builder::new()
+            .name(format!(
+                "{} COM thread (once_blocking)",
+                env!("CARGO_PKG_NAME")
+            ))
+            .spawn(move || once_blocking_in_com_thread(interest))
+            .expect("failed to spawn thread")
+            .join()
+            .inspect_err(log_thread_join_err)
+            .unwrap_or_default(),
+    )
 }
 
 cfg_if! {
@@ -124,7 +128,7 @@ fn log_init_error(error: windows::core::Error) {
 #[cfg(all(not(feature = "log"), feature = "_winrt"))]
 fn log_init_error(_error: windows::core::Error) {}
 
-fn com_thread(
+fn stream_in_com_thread(
     sender: mpsc::UnboundedSender<AvailablePreferences>,
     msg_tx: std_mpsc::Sender<Message>,
     msg_rx: std_mpsc::Receiver<Message>,
@@ -154,6 +158,20 @@ fn com_thread(
             }
         }
     }
+}
+
+fn once_blocking_in_com_thread(interest: Interest) -> AvailablePreferences {
+    #[cfg(feature = "_winrt")]
+    let _guard = match ComThreadGuard::new(COINIT_MULTITHREADED) {
+        Ok(g) => g,
+        Err(error) => {
+            log_init_error(error);
+            return AvailablePreferences::default();
+        }
+    };
+
+    let settings = Settings::new();
+    read_preferences(&settings, interest)
 }
 
 struct Settings {

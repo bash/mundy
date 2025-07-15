@@ -11,12 +11,14 @@ use crate::ReducedTransparency;
 #[cfg(feature = "accent-color")]
 use crate::{AccentColor, Srgba};
 use crate::{AvailablePreferences, Interest};
+use cfg_if::cfg_if;
 #[cfg(feature = "_winrt")]
 use com_thread::ComThreadGuard;
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
 use hook::{register_windows_hook, WindowsHookGuard};
 use pin_project_lite::pin_project;
+use std::any::Any;
 use std::sync::mpsc as std_mpsc;
 use std::thread;
 use std::time::Duration;
@@ -88,7 +90,30 @@ pub(crate) fn once_blocking(
     _interest: Interest,
     _timeout: Duration,
 ) -> Option<AvailablePreferences> {
-    todo!()
+    thread::Builder::new()
+        .name(format!("{} COM thread", env!("CARGO_PKG_NAME")))
+        .spawn(move || todo!())
+        .expect("failed to spawn thread")
+        .join()
+        .inspect_err(log_thread_join_err)
+        .ok()
+        .flatten()
+}
+
+cfg_if! {
+    if #[cfg(all(feature = "log"))] {
+        fn log_thread_join_err(error: &Box<dyn Any + Send + 'static>) {
+            if let Some(error) = error.downcast_ref::<&str>() {
+                log::warn!("COM thread panicked: {error}");
+            } else if let Some(error) = error.downcast_ref::<String>() {
+                log::warn!("COM thread panicked: {error}");
+            } else {
+                log::warn!("COM thread panicked: <custom panic payload>");
+            }
+        }
+    } else {
+        fn log_thread_join_err(_error: &Box<dyn Any + Send + 'static>) {}
+    }
 }
 
 #[cfg(all(feature = "log", feature = "_winrt"))]

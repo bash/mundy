@@ -106,17 +106,18 @@ pub(crate) fn once_blocking(
 
 cfg_if! {
     if #[cfg(all(feature = "log"))] {
-        fn log_thread_join_err(error: &Box<dyn Any + Send + 'static>) {
-            if let Some(error) = error.downcast_ref::<&str>() {
-                log::warn!("COM thread panicked: {error}");
-            } else if let Some(error) = error.downcast_ref::<String>() {
-                log::warn!("COM thread panicked: {error}");
+        fn log_thread_join_err(payload: &Box<dyn Any + Send + 'static>) {
+            let payload = if let Some(payload) = payload.downcast_ref::<&str>() {
+                payload
+            } else if let Some(payload) = payload.downcast_ref::<String>() {
+                payload.as_str()
             } else {
-                log::warn!("COM thread panicked: <custom panic payload>");
-            }
+                "<custom payload>"
+            };
+            log::warn!("COM thread panicked: {payload}");
         }
     } else {
-        fn log_thread_join_err(_error: &Box<dyn Any + Send + 'static>) {}
+        fn log_thread_join_err(_payload: &Box<dyn Any + Send + 'static>) {}
     }
 }
 

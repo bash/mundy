@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use mundy::{Interest, Preferences};
 use winit::application::ApplicationHandler;
 use winit::event_loop::EventLoop;
@@ -5,6 +7,11 @@ use winit::event_loop::EventLoop;
 use winit::platform::macos::{ActivationPolicy, EventLoopBuilderExtMacOS};
 
 fn main() {
+    env_logger::init();
+
+    let once = Preferences::once_blocking(Interest::All, Duration::from_millis(200));
+    eprintln!("preferences from once_blocking: {:#?}", once);
+
     let mut builder = EventLoop::builder();
 
     // This hides the app icon from the Dock.

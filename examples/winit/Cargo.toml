@@ -6,4 +6,5 @@ publish = false
 
 [dependencies]
 winit = "0.30.10"
-mundy = { path = "../../" }
+mundy = { path = "../../", features = ["log"] }
+env_logger = "0.11.8"

@@ -1,4 +1,8 @@
 # Changelog
+## 0.1.10
+* Add `Preferences::once_blocking` - an easy way to retrieve the preferences once. #5
+* Update `epaint` from 0.31 to 0.32
+
 ## 0.1.9
 * Update `bevy_color` to 0.16
 

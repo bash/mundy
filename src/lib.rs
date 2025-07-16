@@ -57,6 +57,7 @@
 
 use futures_lite::Stream;
 use pin_project_lite::pin_project;
+use std::time::Duration;
 use stream_utils::Dedup;
 
 #[macro_use]
@@ -72,7 +73,6 @@ pub use callback::*;
 mod color;
 #[cfg(feature = "accent-color")]
 pub use color::*;
-mod once_blocking;
 mod stream_utils;
 
 /// # Feature Flags
@@ -133,7 +133,7 @@ pub struct Preferences {
 
 impl Preferences {
     /// Creates a new stream for a selection of system preferences given by `interests`.
-    /// Should be called from the main thread *after* setting up an event loop (e.g. using winit).
+    /// Should be called from the main thread.
     ///
     /// The stream is guaranteed to contain at least one item with the initial preferences.
     ///
@@ -146,6 +146,22 @@ impl Preferences {
         PreferencesStream {
             inner: Dedup::new(imp::stream(interest)),
         }
+    }
+
+    /// Retrieves a selection of system preferences given by `interests`.
+    /// Should be called from the main thread.
+    ///
+    /// You should generally prefer [`Preferences::stream()`] or [`Preferences::subscribe()`] as
+    /// they provide updates when the user changes the preferences.
+    ///
+    /// Returns [`None`] if the preferences cannot be retrieved within the given timeout.
+    ///
+    #[doc = include_str!("doc/caveats.md")]
+    pub fn once_blocking(interest: Interest, timeout: Duration) -> Option<Self> {
+        if interest.is_empty() {
+            return Some(Default::default());
+        }
+        imp::once_blocking(interest, timeout).map(Self::from)
     }
 }
 

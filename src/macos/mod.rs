@@ -74,10 +74,13 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
 }
 
 pub(crate) fn once_blocking(
-    _interest: Interest,
+    interest: Interest,
     _timeout: Duration,
 ) -> Option<AvailablePreferences> {
-    todo!()
+    let mtm =
+        MainThreadMarker::new().expect("on macOS, `once_blocking` must be called from the main thread");
+    let application = NSApplication::sharedApplication(mtm);
+    Some(get_preferences(interest, &application))
 }
 
 #[cfg(feature = "_macos-observable")]

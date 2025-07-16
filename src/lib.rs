@@ -163,6 +163,17 @@ impl Preferences {
         }
         imp::once_blocking(interest, timeout).map(Self::from)
     }
+
+    /// Creates a new subscription for a selection of system preferences given by `interests`.
+    ///
+    /// The provided callback is guaranteed to be called at least once with the initial values
+    /// and is subsequently called when preferences are updated.
+    ///
+    #[doc = include_str!("doc/caveats.md")]
+    #[cfg(feature = "callback")]
+    pub fn subscribe(interest: Interest, callback: impl CallbackFn) -> Subscription {
+        Preferences::subscribe_impl(interest, callback)
+    }
 }
 
 pin_project! {

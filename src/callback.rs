@@ -17,13 +17,10 @@ pub struct Subscription(
 static_assertions::assert_impl_all!(Subscription: Send, Sync);
 
 impl Preferences {
-    /// Creates a new subscription for a selection of system preferences given by `interests`.
-    ///
-    /// The provided callback is guaranteed to be called at least once with the initial values
-    /// and is subsequently called when preferences are updated.
-    ///
-    #[doc = include_str!("doc/caveats.md")]
-    pub fn subscribe(interest: Interest, mut callback: impl CallbackFn) -> Subscription {
+    pub(crate) fn subscribe_impl(
+        interest: Interest,
+        mut callback: impl CallbackFn,
+    ) -> Subscription {
         // No need to spawn a thread if the interests are empty.
         if interest.is_empty() {
             return Subscription(None);

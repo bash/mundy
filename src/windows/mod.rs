@@ -48,7 +48,7 @@ mod main_thread;
 
 pin_project! {
     pub(crate) struct PreferencesStream {
-        _shutdown: Shutdown,
+        _shutdown: Option<Shutdown>,
         #[pin] inner: stream::Boxed<AvailablePreferences>,
     }
 }
@@ -81,8 +81,15 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
         .spawn(move || stream_in_com_thread(sender, message_tx, message_rx, interest))
         .expect("failed to spawn thread");
     PreferencesStream {
-        _shutdown: shutdown,
+        _shutdown: Some(shutdown),
         inner: receiver.boxed(),
+    }
+}
+
+pub(crate) fn default_stream() -> PreferencesStream {
+    PreferencesStream {
+        _shutdown: None,
+        inner: stream::once(AvailablePreferences::default()).boxed(),
     }
 }
 

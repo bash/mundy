@@ -58,11 +58,7 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     let Some(window) = window() else {
         #[cfg(feature = "log")]
         log::warn!("tried to read preferences from non-main thread");
-        return PreferencesStream {
-            _guards: Vec::default(),
-            _accent_color: AccentColorObserver::default(),
-            inner: stream::once(AvailablePreferences::default()).boxed(),
-        };
+        return default_stream();
     };
 
     #[allow(unused_mut)]
@@ -145,6 +141,14 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
         inner: stream::once(preferences)
             .chain(changes(preferences, receiver))
             .boxed(),
+    }
+}
+
+pub(crate) fn default_stream() -> PreferencesStream {
+    PreferencesStream {
+        _guards: Vec::default(),
+        _accent_color: AccentColorObserver::default(),
+        inner: stream::once(AvailablePreferences::default()).boxed(),
     }
 }
 

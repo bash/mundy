@@ -69,7 +69,16 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     PreferencesStream {
         inner,
         #[cfg(feature = "_macos-observable")]
-        _observer: observer,
+        _observer: Some(observer),
+        #[cfg(not(feature = "_macos-observable"))]
+        _observer: (),
+    }
+}
+
+pub(crate) fn default_stream() -> PreferencesStream {
+    PreferencesStream {
+        inner: stream::once(AvailablePreferences::default()).boxed(),
+        _observer: Default::default(),
     }
 }
 
@@ -77,24 +86,22 @@ pub(crate) fn once_blocking(
     interest: Interest,
     _timeout: Duration,
 ) -> Option<AvailablePreferences> {
-    let mtm =
-        MainThreadMarker::new().expect("on macOS, `once_blocking` must be called from the main thread");
+    let mtm = MainThreadMarker::new()
+        .expect("on macOS, `once_blocking` must be called from the main thread");
     let application = NSApplication::sharedApplication(mtm);
     Some(get_preferences(interest, &application))
 }
 
 #[cfg(feature = "_macos-observable")]
-pin_project! {
-    pub(crate) struct PreferencesStream {
-        #[pin] inner: stream::Boxed<AvailablePreferences>,
-        _observer: ObserverRegistration,
-    }
-}
+type ObserverRegistrationImpl = Option<ObserverRegistration>;
 
 #[cfg(not(feature = "_macos-observable"))]
+type ObserverRegistrationImpl = ();
+
 pin_project! {
     pub(crate) struct PreferencesStream {
         #[pin] inner: stream::Boxed<AvailablePreferences>,
+        _observer: ObserverRegistrationImpl,
     }
 }
 

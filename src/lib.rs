@@ -140,9 +140,13 @@ impl Preferences {
     ///
     #[doc = include_str!("doc/caveats.md")]
     pub fn stream(interest: Interest) -> PreferencesStream {
-        // TODO: handle empty interest
+        let inner = if interest.is_empty() {
+            imp::default_stream()
+        } else {
+            imp::stream(interest)
+        };
         PreferencesStream {
-            inner: Dedup::new(imp::stream(interest)),
+            inner: Dedup::new(inner),
         }
     }
 

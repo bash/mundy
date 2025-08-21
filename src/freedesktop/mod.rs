@@ -67,6 +67,10 @@ pub(crate) fn stream(interest: Interest) -> PreferencesStream {
     preferences_stream(interest).boxed()
 }
 
+pub(crate) fn default_stream() -> PreferencesStream {
+    stream::once(AvailablePreferences::default()).boxed()
+}
+
 pub(crate) fn once_blocking(interest: Interest, timeout: Duration) -> Option<AvailablePreferences> {
     block_on(stream(interest).next().or(timer(timeout)))
 }

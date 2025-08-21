@@ -39,19 +39,3 @@ impl Srgba {
         Self::from_f64_array(color.map(|c| c as f64 / 255.))
     }
 }
-
-#[cfg(feature = "epaint")]
-impl From<Srgba> for epaint::Color32 {
-    fn from(value: Srgba) -> Self {
-        let array = value.to_u8_array();
-        epaint::Color32::from_rgba_premultiplied(array[0], array[1], array[2], array[3])
-    }
-}
-
-#[cfg(feature = "bevy_color")]
-impl From<Srgba> for bevy_color::Srgba {
-    fn from(value: Srgba) -> Self {
-        use bevy_color::ColorToComponents as _;
-        bevy_color::Srgba::from_f32_array(value.to_f64_array().map(|c| c as f32))
-    }
-}

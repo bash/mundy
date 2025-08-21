@@ -2071,10 +2071,8 @@ version = "0.1.10"
 dependencies = [
  "async-io",
  "beul",
- "bevy_color",
  "cfg-if",
  "dispatch",
- "epaint",
  "futures-channel",
  "futures-lite",
  "log",

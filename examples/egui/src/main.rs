@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use bevy_color::{ColorToPacked, Oklcha, Srgba};
+use bevy_color::{ColorToComponents as _, ColorToPacked, Oklcha, Srgba};
 use eframe::egui::{self, style::Selection, Color32, Stroke, Style};
 use egui_demo_lib::{View as _, WidgetGallery};
 use egui_theme_switch::global_theme_switch;
@@ -91,6 +91,10 @@ fn to_epaint(color: impl Into<Srgba>) -> Color32 {
     Color32::from_rgba_premultiplied(color[0], color[1], color[2], color[3])
 }
 
+fn to_bevy(color: mundy::Srgba) -> Srgba {
+    Srgba::from_f32_array(color.to_f64_array().map(|c| c as f32))
+}
+
 struct MyApp {
     widget_gallery: WidgetGallery,
     _subscription: Subscription,
@@ -110,7 +114,7 @@ impl MyApp {
 fn update_style(ctx: egui::Context) -> impl Fn(Preferences) {
     move |preferences| {
         if let Some(accent) = preferences.accent_color.0 {
-            ctx.all_styles_mut(|style| use_accent(style, accent.into()));
+            ctx.all_styles_mut(|style| use_accent(style, to_bevy(accent)));
             ctx.request_repaint();
         }
     }

@@ -77,8 +77,6 @@ mod stream_utils;
 
 /// # Feature Flags
 ///
-/// * `epaint`—Enable converting from [`Srgba`] to [`epaint::Color32`].
-/// * `bevy_color`—Enable converting from [`Srgba`] to [`bevy_color::Srgba`].
 /// * `log`—Enable logging.
 /// * `callback`—Enable the synchronous [`Preferences::subscribe`] function (*default*).
 /// * `color-scheme`—Enable support for [`ColorScheme`] (*default*).

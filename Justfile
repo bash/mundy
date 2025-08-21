@@ -1,4 +1,9 @@
 set windows-shell := ["powershell"]
+python-bin := if os() == "windows" {
+    "python"
+} else {
+    "python3"
+}
 
 @check *args:
     just check-all {{args}}
@@ -16,14 +21,8 @@ check-all *args:
 check-no-settings *args:
     cargo clippy {{args}} --no-default-features --features async-io
 
-[linux]
-[macos]
 check-individual-settings *args:
-    python3 scripts/check-individual-settings.py {{args}}
-
-[windows]
-check-individual-settings *args:
-    python scripts/check-individual-settings.py {{args}}
+    {{python-bin}} scripts/check-individual-settings.py {{args}}
 
 [linux]
 check-async-runtimes *args:

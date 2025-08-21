@@ -32,6 +32,8 @@ async {
 
 ## [Docs](https://docs.rs/mundy)
 
+## [Examples](./examples/readme.md)
+
 ## License
 Licensed under the Apache License, Version 2.0 ([license.txt](license.txt) or <http://www.apache.org/licenses/LICENSE-2.0>)
 

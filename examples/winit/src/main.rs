@@ -10,7 +10,7 @@ fn main() {
     env_logger::init();
 
     let once = Preferences::once_blocking(Interest::All, Duration::from_millis(200));
-    eprintln!("preferences from once_blocking: {:#?}", once);
+    eprintln!("preferences from once_blocking: {once:#?}");
 
     let mut builder = EventLoop::builder();
 

@@ -262,6 +262,21 @@ pub enum ColorScheme {
     Dark,
 }
 
+#[cfg(feature = "color-scheme")]
+impl ColorScheme {
+    pub fn is_no_preference(self) -> bool {
+        matches!(self, ColorScheme::NoPreference)
+    }
+
+    pub fn is_dark(self) -> bool {
+        matches!(self, ColorScheme::Dark)
+    }
+
+    pub fn is_light(self) -> bool {
+        matches!(self, ColorScheme::Light)
+    }
+}
+
 /// The user's preferred contrast level.
 ///
 /// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast>
@@ -290,6 +305,25 @@ pub enum Contrast {
     Custom,
 }
 
+#[cfg(feature = "contrast")]
+impl Contrast {
+    pub fn is_no_preference(self) -> bool {
+        matches!(self, Contrast::NoPreference)
+    }
+
+    pub fn is_more(self) -> bool {
+        matches!(self, Contrast::More)
+    }
+
+    pub fn is_less(self) -> bool {
+        matches!(self, Contrast::Less)
+    }
+
+    pub fn is_custom(self) -> bool {
+        matches!(self, Contrast::Custom)
+    }
+}
+
 /// The user prefers to have a minimal amount
 /// of motion. Especially motion that simulates the third dimension.
 ///
@@ -316,6 +350,17 @@ pub enum ReducedMotion {
     Reduce,
 }
 
+#[cfg(feature = "reduced-motion")]
+impl ReducedMotion {
+    pub fn is_no_preference(self) -> bool {
+        matches!(self, ReducedMotion::NoPreference)
+    }
+
+    pub fn is_reduce(self) -> bool {
+        matches!(self, ReducedMotion::Reduce)
+    }
+}
+
 /// Indicates that applications should not use transparent or semitransparent backgrounds.
 ///
 /// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency>.
@@ -337,6 +382,17 @@ pub enum ReducedTransparency {
     /// Indicates that the user prefers an interface with no transparent
     /// or semitransparent backgrounds.
     Reduce,
+}
+
+#[cfg(feature = "reduced-transparency")]
+impl ReducedTransparency {
+    pub fn is_no_preference(self) -> bool {
+        matches!(self, ReducedTransparency::NoPreference)
+    }
+
+    pub fn is_reduce(self) -> bool {
+        matches!(self, ReducedTransparency::Reduce)
+    }
 }
 
 /// The user's current system wide accent color preference.

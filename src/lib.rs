@@ -73,6 +73,8 @@ pub use callback::*;
 mod color;
 #[cfg(feature = "accent-color")]
 pub use color::*;
+#[cfg(any(test, target_os = "android", target_os = "windows"))]
+mod callback_utils;
 mod stream_utils;
 
 /// # Feature Flags

@@ -19,6 +19,11 @@ impl<T> Callbacks<T> {
         }
     }
 
+    #[cfg(target_os = "android")]
+    pub fn is_empty(&self) -> bool {
+        self.callbacks.is_empty()
+    }
+
     pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.callbacks.iter().map(|c| &c.value)
     }

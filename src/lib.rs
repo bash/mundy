@@ -73,8 +73,18 @@ pub use callback::*;
 mod color;
 #[cfg(feature = "accent-color")]
 pub use color::*;
-#[cfg(any(test, target_os = "android", target_os = "windows"))]
+
+#[cfg(not(test))]
+cfg::any_feature! {
+    #[cfg(any(
+        target_os = "android",
+        target_os = "windows"
+    ))]
+    mod callback_utils;
+}
+#[cfg(test)]
 mod callback_utils;
+
 mod stream_utils;
 
 /// # Feature Flags
@@ -240,6 +250,10 @@ impls! {
         "reduced-motion" reduced_motion,
         "accent-color" accent_color,
         "reduced-transparency" reduced_transparency,
+    };
+
+    #[cfg(target_os = "android")]
+    mod android supports {
     };
 }
 

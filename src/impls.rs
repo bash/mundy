@@ -8,12 +8,18 @@ macro_rules! impls {
             $(
                 else if #[cfg(all($($meta)*, any($(feature = $feature),*)))]
                 {
+                    #[cfg_attr(test, allow(unused_imports))]
+                    mod cfg { pub(crate) use enabled as any_feature; }
+
                     mod $mod;
                     use $mod as imp;
                     impls!(@struct { $($feature $setting),* });
                 }
             )*
             else {
+                #[cfg_attr(test, allow(unused_imports))]
+                mod cfg { pub(crate) use disabled as any_feature; }
+
                 mod fallback;
                 use fallback as imp;
                 impls!(@struct { });
@@ -47,4 +53,23 @@ macro_rules! impls {
             }
         }
     }
+}
+
+// This trick was shamelessly stolen from bevy_platform:
+// <https://github.com/bevyengine/bevy/blob/main/crates/bevy_platform/src/cfg.rs>
+
+/// This macro passes the provided code because at least one supported preference feature is currently active.
+#[allow(unused_macros)]
+macro_rules! disabled {
+    () => { false };
+    (if { $($p:tt)* } else { $($n:tt)* }) => { $($n)* };
+    ($($p:tt)*) => {};
+}
+
+/// This macro suppresses the provided code because no supported preference feature is currently active.
+#[allow(unused_macros)]
+macro_rules! enabled {
+    () => { true };
+    (if { $($p:tt)* } else { $($n:tt)* }) => { $($p)* };
+    ($($p:tt)*) => { $($p)* };
 }

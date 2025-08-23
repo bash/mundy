@@ -12,14 +12,19 @@ mod android {
     pub(super) fn build() {
         let android_jar =
             android_build::android_jar(None).expect("Unable to locate android.jar path");
-        let java_path = "src/android/MundySupport.java";
-        println!("cargo:rerun-if-changed={java_path}");
+        let java_source_files = &[
+            "src/android/MundySupport.java",
+            "src/android/MundyBackgroundThread.java",
+        ];
+        for f in java_source_files {
+            println!("cargo:rerun-if-changed={f}");
+        }
         let out_dir = cargo::out_dir();
         let classes_out_dir = out_dir.join("java/garden/tau/mundy");
         let _ = std::fs::remove_dir_all(&classes_out_dir);
         std::fs::create_dir_all(&classes_out_dir).unwrap();
         JavaBuild::new()
-            .file(java_path)
+            .files(java_source_files)
             .class_path(&android_jar)
             .classes_out_dir(&classes_out_dir)
             .java_source_version(8)
@@ -29,6 +34,7 @@ mod android {
             .expect("java build failed");
 
         let dex_output_dir = out_dir.join("dex");
+        let _ = std::fs::remove_dir_all(&dex_output_dir);
         std::fs::create_dir_all(&dex_output_dir).unwrap();
         let java_classes_root = out_dir.join("java");
 

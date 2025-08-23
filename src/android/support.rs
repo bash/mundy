@@ -35,6 +35,22 @@ impl JavaSupport {
         Ok(Self { global_ref })
     }
 
+    #[cfg(feature = "color-scheme")]
+    pub(crate) fn get_night_mode(&self, env: &mut JNIEnv) -> Result<bool> {
+        Ok(env
+            .call_method(&self.global_ref, "getNightMode", "()Z", &[])?
+            .z()
+            .expect("method to return a boolean"))
+    }
+
+    #[cfg(feature = "contrast")]
+    pub(crate) fn get_high_contrast(&self, env: &mut JNIEnv) -> Result<bool> {
+        Ok(env
+            .call_method(&self.global_ref, "getHighContrast", "()Z", &[])?
+            .z()
+            .expect("method to return a boolean"))
+    }
+
     pub(crate) fn subscribe(&self, env: &mut JNIEnv) -> Result<()> {
         env.call_method(&self.global_ref, "subscribe", "()V", &[])?;
         Ok(())

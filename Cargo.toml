@@ -46,6 +46,7 @@ wasm-bindgen-futures = "0.4"
 [target.'cfg(target_os = "android")'.dependencies]
 ndk-context = "0.1.1"
 jni = "0.21.1"
+futures-channel = { version = "0.3" }
 
 # On Linux, we already have either async-io or tokio, so no need for beul.
 # On WASM, we don't need block_on (we use spawn_local instead), so no need for beul.

@@ -254,6 +254,8 @@ impls! {
 
     #[cfg(target_os = "android")]
     mod android supports {
+        "color-scheme" color_scheme,
+        "contrast" contrast,
     };
 }
 

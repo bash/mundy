@@ -59,6 +59,14 @@ impl JavaSupport {
             .expect("method to return a float"))
     }
 
+    #[cfg(feature = "accent-color")]
+    pub(crate) fn get_accent_color(&self, env: &mut JNIEnv) -> Result<i32> {
+        Ok(env
+            .call_method(&self.global_ref, "getAccentColor", "()I", &[])?
+            .i()
+            .expect("method to return an int"))
+    }
+
     pub(crate) fn subscribe(&self, env: &mut JNIEnv) -> Result<()> {
         env.call_method(&self.global_ref, "subscribe", "()V", &[])?;
         Ok(())

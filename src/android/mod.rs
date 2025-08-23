@@ -4,6 +4,8 @@ use crate::ColorScheme;
 use crate::Contrast;
 #[cfg(feature = "reduced-motion")]
 use crate::ReducedMotion;
+#[cfg(feature = "accent-color")]
+use crate::{AccentColor, Srgba};
 use crate::{AvailablePreferences, Interest};
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
@@ -107,6 +109,11 @@ fn try_get_preferences(interest: Interest) -> Result<AvailablePreferences> {
         preferences.reduced_motion = get_reduced_motion(&support, &mut env).unwrap_or_default();
     }
 
+    #[cfg(feature = "reduced-motion")]
+    if interest.is(Interest::AccentColor) {
+        preferences.accent_color = get_accent_color(&support, &mut env).unwrap_or_default();
+    }
+
     Ok(preferences)
 }
 
@@ -135,4 +142,18 @@ fn get_reduced_motion(support: &JavaSupport, env: &mut JNIEnv) -> Result<Reduced
     } else {
         Ok(ReducedMotion::NoPreference)
     }
+}
+
+#[cfg(feature = "reduced-motion")]
+fn get_accent_color(support: &JavaSupport, env: &mut JNIEnv) -> Result<AccentColor> {
+    let color = support.get_accent_color(env)? as u32;
+    // Color ints in Android APIs always define colors in the
+    // sRGB color space, packed into an int as #AARRGGBB:
+    // https://developer.android.com/reference/android/graphics/Color#color-ints
+    let alpha = ((color >> 24) & 0xff) as u8;
+    let red = ((color >> 16) & 0xff) as u8;
+    let green = ((color >> 8) & 0xff) as u8;
+    let blue = (color & 0xff) as u8;
+    let color = Srgba::from_u8_array([red, green, blue, alpha]);
+    Ok(AccentColor(Some(color)))
 }

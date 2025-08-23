@@ -7,11 +7,13 @@ import android.app.UiModeManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.TypedArray;
 import android.database.ContentObserver;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import java.lang.Override;
 import java.util.concurrent.Executor;
 
@@ -108,6 +110,15 @@ public class MundySupport {
     // > Setting to 0.0f will cause animations to end immediately.
     public boolean getPrefersReducedMotion() {
         return Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
+    }
+
+    // Again, this approach is shamelessly stolen from [Firefox](https://github.com/mozilla-firefox/firefox/blob/441506211f9c4c806ce0b6d2b17f67e0775d6ef7/mobile/android/geckoview/src/main/java/org/mozilla/gecko/GeckoAppShell.java#L77)
+    public int getAccentColor() {
+        final ContextThemeWrapper wrapper = new ContextThemeWrapper(context, android.R.style.TextAppearance);
+        final TypedArray attributes = wrapper.obtainStyledAttributes(new int[]{ android.R.attr.colorAccent });
+        final int index = attributes.getIndex(0);
+        final int defaultValue = 0;
+        return attributes.getColor(index, defaultValue);
     }
 
     private boolean getHighTextContrastEnabled() {

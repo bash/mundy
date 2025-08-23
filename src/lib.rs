@@ -283,6 +283,7 @@ impls! {
         "color-scheme" color_scheme,
         "contrast" contrast,
         "reduced-motion" reduced_motion,
+        "accent-color" accent_color,
     };
 }
 

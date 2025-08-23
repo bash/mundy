@@ -282,6 +282,7 @@ impls! {
     mod android supports {
         "color-scheme" color_scheme,
         "contrast" contrast,
+        "reduced-motion" reduced_motion,
     };
 }
 

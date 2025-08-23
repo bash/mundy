@@ -2,6 +2,8 @@
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]
 use crate::Contrast;
+#[cfg(feature = "reduced-motion")]
+use crate::ReducedMotion;
 use crate::{AvailablePreferences, Interest};
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
@@ -100,6 +102,11 @@ fn try_get_preferences(interest: Interest) -> Result<AvailablePreferences> {
         preferences.contrast = get_contrast(&support, &mut env).unwrap_or_default();
     }
 
+    #[cfg(feature = "reduced-motion")]
+    if interest.is(Interest::ReducedMotion) {
+        preferences.reduced_motion = get_reduced_motion(&support, &mut env).unwrap_or_default();
+    }
+
     Ok(preferences)
 }
 
@@ -118,5 +125,14 @@ fn get_contrast(support: &JavaSupport, env: &mut JNIEnv) -> Result<Contrast> {
         Ok(Contrast::More)
     } else {
         Ok(Contrast::NoPreference)
+    }
+}
+
+#[cfg(feature = "reduced-motion")]
+fn get_reduced_motion(support: &JavaSupport, env: &mut JNIEnv) -> Result<ReducedMotion> {
+    if support.get_prefers_reduced_motion(env)? {
+        Ok(ReducedMotion::Reduce)
+    } else {
+        Ok(ReducedMotion::NoPreference)
     }
 }

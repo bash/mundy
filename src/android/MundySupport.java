@@ -64,6 +64,7 @@ public class MundySupport {
             }
         };
         contentResolver.registerContentObserver(Settings.Secure.getUriFor("high_text_contrast_enabled"), notifyForDescendants, contentObserver);
+        contentResolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), notifyForDescendants, contentObserver);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             final UiModeManager uiModeManager = (UiModeManager) context.getSystemService(UI_MODE_SERVICE);
@@ -97,6 +98,16 @@ public class MundySupport {
     // <https://source.chromium.org/chromium/chromium/src/+/main:ui/accessibility/android/java/src/org/chromium/ui/accessibility/AccessibilityState.java;l=544;drc=057b542e8c6318874cb4ae6120a601ffdeac9c26>
     public boolean getHighContrast() {
         return getHighTextContrastEnabled() || getContrastLevel() == 1f;
+    }
+
+    // Both Firefox and Chromium read this preference to derive the prefers-reduced-motion preference:
+    // * In Firefox, this is done in [GeckoSystemStateListener.java](https://github.com/mozilla-firefox/firefox/blob/ff058e8e75bfdd11a1bdbd1a706c3a4448bce335/mobile/android/geckoview/src/main/java/org/mozilla/gecko/GeckoSystemStateListener.java#L163)
+    // * In Chromium, this is done in [AccessibilityState.java](https://source.chromium.org/chromium/chromium/src/+/main:ui/accessibility/android/java/src/org/chromium/ui/accessibility/AccessibilityState.java;l=494;drc=8564ceae60d27c21fa575d5fa0a12faae7ab252b)
+    //
+    // Quoting from the [docs](https://developer.android.com/reference/android/provider/Settings.Global#ANIMATOR_DURATION_SCALE):
+    // > Setting to 0.0f will cause animations to end immediately.
+    public boolean getPrefersReducedMotion() {
+        return Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
     }
 
     private boolean getHighTextContrastEnabled() {

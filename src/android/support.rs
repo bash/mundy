@@ -51,6 +51,14 @@ impl JavaSupport {
             .expect("method to return a boolean"))
     }
 
+    #[cfg(feature = "reduced-motion")]
+    pub(crate) fn get_prefers_reduced_motion(&self, env: &mut JNIEnv) -> Result<bool> {
+        Ok(env
+            .call_method(&self.global_ref, "getPrefersReducedMotion", "()Z", &[])?
+            .z()
+            .expect("method to return a float"))
+    }
+
     pub(crate) fn subscribe(&self, env: &mut JNIEnv) -> Result<()> {
         env.call_method(&self.global_ref, "subscribe", "()V", &[])?;
         Ok(())

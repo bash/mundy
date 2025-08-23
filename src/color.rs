@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// A color in the sRGB color space. Each component is in the range `[0, 1]`.
 ///
 /// ## Examples
@@ -7,12 +9,39 @@
 /// // Convert each channels to u8
 /// let (r, g, b, a) = color.to_u8_array().into();
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Srgba {
     pub red: f64,
     pub green: f64,
     pub blue: f64,
     pub alpha: f64,
+}
+
+impl fmt::Debug for Srgba {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Srgba")
+            .field("_", &Hex(self.to_u8_array()))
+            .field("red", &self.red)
+            .field("green", &self.green)
+            .field("blue", &self.blue)
+            .field("alpha", &self.alpha)
+            .finish()
+    }
+}
+
+struct Hex([u8; 4]);
+
+impl fmt::Debug for Hex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "#{r:02x}{g:02x}{b:02x}{a:02x}",
+            r = self.0[0],
+            g = self.0[1],
+            b = self.0[2],
+            a = self.0[3]
+        )
+    }
 }
 
 impl Srgba {

@@ -2,18 +2,18 @@ package garden.tau.mundy;
 
 import static android.content.Context.UI_MODE_SERVICE;
 
+import android.app.UiModeManager.ContrastChangeListener;
 import android.app.UiModeManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.os.Build;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
-import java.util.concurrent.Executor;
 import java.lang.Override;
-import android.app.UiModeManager.ContrastChangeListener;
-import android.database.ContentObserver;
-import android.os.Handler;
+import java.util.concurrent.Executor;
 
 /**
  * Support class enabling the Rust crate netwatcher to monitor network interface changes,

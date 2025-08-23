@@ -1,3 +1,57 @@
+//! # Android
+//! ## Overview
+//! The Android backend of mundy uses the Java Native Interface (JNI) to call the Java-based APIs.
+//! Some limited things are exposed as C APIs through the [NDK] with its corresponding [`ndk`] crate.
+//!
+//! To interact with Java code we need two things, both of which are provided to us by the
+//! [`ndk_context`] crate:
+//! * the JVM instance
+//! * the current Android [`Context`].
+//!
+//! The [`ndk_context`] crate works with both apps written in Rust and apps
+//! written in Java/Kotlin that call into Rust.
+//!
+//! The facilitate interacting with the Java APIs, we have some glue code
+//! written in Java, that gets compiled to DEX bytecode in our `build.rs`
+//! and then injected at runtime in the [`support`] module.
+//!
+//! A lot of this is based on the setup that the [`netwatcher`] crate uses.
+//! There's also an excellent [blog post] by crate's author, Thomas Karpiniec.
+//!
+//! ## Caveats
+//!
+//! ### Activity re-creation
+//! Certain actions on Android, such as changing the system theme (accent color, etc.)
+//! results in the activity being destroyed and re-created.
+//!
+//! TODO: do we need to be informed about activity re-creation for java/kotlin apps?
+//!
+//! For applications written using [`NativeActivity`] this means that
+//! `android_main` is expected to return after receiving a [`Destroy`] event. It is then called again with
+//! the new activity. Winit currently [does not handle the `Destroy` event appropriately][winit-bug], causing apps to freeze.
+//!
+//! ### Configuration Changes
+//!
+//! For some [configuration changes](https://developer.android.com/guide/topics/resources/runtime-changes)
+//! there is no way to subscribe to, other than having access to the activity (e.g. subclassing or setting a method in the vtable in the case of [`NativeActivity`]).
+//! This is the case for settings like [`uiMode`] (Dark mode versus light mode).
+//!
+//! For settings like these, we rely on the user of mundy to call [`crate::platform::android::on_configuration_changed`].
+//!
+//! Unfortunately, `winit` [does not provide][winit-missing-api] access to the `ConfigurationChanged` event.
+//! So apps relying on `winit` will not be able to detect dark/light mode changes.
+//!
+//! [NDK]: https://developer.android.com/ndk/reference
+//! [`ndk`]: https://docs.rs/ndk/0.9.0/ndk/
+//! [`Context`]: https://developer.android.com/reference/android/content/Context
+//! [blog post]: https://octet-stream.net/b/scb/2025-08-03-injecting-java-from-native-libraries-on-android.html
+//! [`netwatcher`]: https://github.com/thombles/netwatcher
+//! [winit-bug]: https://github.com/rust-windowing/winit/issues/4303
+//! [winit-missing-api]: https://github.com/rust-windowing/winit/issues/2120
+//! [`Destroy`]: https://docs.rs/android-activity/latest/android_activity/enum.MainEvent.html#variant.Destroy
+//! [`NativeActivity`]: https://developer.android.com/reference/android/app/NativeActivity
+//! [`uiMode`]: https://developer.android.com/reference/android/content/res/Configuration#uiMode
+
 #[cfg(feature = "color-scheme")]
 use crate::ColorScheme;
 #[cfg(feature = "contrast")]

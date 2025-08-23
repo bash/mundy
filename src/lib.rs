@@ -101,6 +101,7 @@ pub mod platform {
         ///
         /// TODO: mention the required changes to AndroidManifest.xml, see
         /// <https://developer.android.com/guide/topics/resources/runtime-changes#java>
+        /// <https://developer.android.com/develop/ui/views/theming/darktheme#config-changes>
         ///
         /// [`View`]: https://developer.android.com/reference/kotlin/android/view/View#onconfigurationchanged
         /// [`Activity`]: https://developer.android.com/reference/android/app/Activity#onConfigurationChanged(android.content.res.Configuration)

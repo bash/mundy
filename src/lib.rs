@@ -87,6 +87,32 @@ mod callback_utils;
 
 mod stream_utils;
 
+/// Contains platform-specific functionality.
+pub mod platform {
+    /// TODO: Document how to use this with ndk-context.
+    #[cfg(any(doc, target_os = "android"))]
+    #[cfg_attr(docsrs, doc(cfg(target_os = "android")))]
+    pub mod android {
+        /// When certain preferences such as the [`ColorScheme`](`crate::ColorScheme`) change,
+        /// Android calls the `onConfigurationChanged` method on your [`View`] or [`Activity`].
+        ///
+        /// Since there is no way for mundy to override these methods itself,
+        /// you need to override `onConfigurationChanged` and call this function.
+        ///
+        /// TODO: mention the required changes to AndroidManifest.xml, see
+        /// <https://developer.android.com/guide/topics/resources/runtime-changes#java>
+        ///
+        /// [`View`]: https://developer.android.com/reference/kotlin/android/view/View#onconfigurationchanged
+        /// [`Activity`]: https://developer.android.com/reference/android/app/Activity#onConfigurationChanged(android.content.res.Configuration)
+        pub fn on_configuration_changed() {
+            #[cfg(target_os = "android")]
+            crate::cfg::any_feature! {
+                crate::imp::on_configuration_changed();
+            }
+        }
+    }
+}
+
 /// # Feature Flags
 ///
 /// * `log`—Enable logging.

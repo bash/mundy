@@ -57,18 +57,20 @@ fn unsubscribe_java() -> Result<()> {
     Ok(())
 }
 
+pub(crate) fn on_configuration_changed() {
+    let Ok(callbacks) = CALLBACKS.read() else {
+        return;
+    };
+    for callback in callbacks.iter() {
+        callback();
+    }
+}
+
 // This method is called from Java using `native` method.
 //
 // The [JNI Design Overview](https://docs.oracle.com/javase/1.5.0/docs/guide/jni/spec/design.html)
 // documents the name mangling scheme.
 #[no_mangle]
 pub extern "C" fn Java_garden_tau_mundy_MundySupport_onPreferencesChanged() {
-    _ = catch_unwind(|| {
-        let Ok(callbacks) = CALLBACKS.read() else {
-            return;
-        };
-        for callback in callbacks.iter() {
-            callback();
-        }
-    });
+    _ = catch_unwind(on_configuration_changed);
 }

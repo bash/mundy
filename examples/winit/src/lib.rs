@@ -61,7 +61,15 @@ impl ApplicationHandler for App {
         &mut self,
         _event_loop: &winit::event_loop::ActiveEventLoop,
         _window_id: winit::window::WindowId,
-        _event: winit::event::WindowEvent,
+        event: winit::event::WindowEvent,
     ) {
+        // Sadly we can't get direct access to the underlying
+        // `ConfigChangedEvent` on Android (this is an open issue¹ in winit),
+        // but luckily winit emits a `ScaleFactorChanged` event (I think this is a bug).
+        // ¹: https://github.com/rust-windowing/winit/issues/2120
+        #[cfg(target_os = "android")]
+        if let winit::event::WindowEvent::ScaleFactorChanged { .. } = event {
+            mundy::platform::android::on_configuration_changed();
+        }
     }
 }

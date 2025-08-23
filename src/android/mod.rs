@@ -16,6 +16,7 @@ use support::{java_vm, JavaSupport};
 mod result;
 mod subscription;
 mod support;
+pub(crate) use subscription::on_configuration_changed;
 
 pin_project! {
     pub(crate) struct PreferencesStream {
@@ -70,7 +71,6 @@ pub(crate) fn once_blocking(
 }
 
 fn send_preferences(interest: Interest, tx: &mpsc::UnboundedSender<AvailablePreferences>) {
-    log::info!("sending preferences w. interest {interest:#?} to tx: {tx:#?}");
     _ = tx.unbounded_send(get_preferences(interest));
 }
 

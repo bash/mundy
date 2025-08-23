@@ -4,7 +4,25 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+crate-type = [
+    "staticlib",
+    "cdylib",    # needed for Android
+    "rlib",      # rlib needed for running locally
+]
+
 [dependencies]
-winit = "0.30.10"
+winit = { version = "0.30.10", features = ["android-native-activity"] }
 mundy = { path = "../../", features = ["log"] }
 env_logger = "0.11.8"
+android_logger = "0.15.1"
+log = "0.4.27"
+
+[package.metadata.android]
+build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+
+[package.metadata.android.sdk]
+target_sdk_version = 33
+
+[package.metadata.android.application]
+label = "Mundy Winit Example"

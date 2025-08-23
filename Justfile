@@ -10,6 +10,7 @@ python-bin := if os() == "windows" {
     just check-individual-settings {{args}}
     just check-async-runtimes {{args}}
     just check-wasm {{args}}
+    cargo test {{args}}
 
 @check-wasm *args:
     just check-all --target wasm32-unknown-unknown {{args}}

@@ -3,8 +3,10 @@
 //! This is a lot easier (and involves a lot less unsafe code) than setting
 //! up our own hidden window and event loop.
 
+use crate::callback_utils::{CallbackHandle, Callbacks};
 use crate::windows::main_thread::main_thread_id;
-use slab::Slab;
+use std::error::Error;
+use std::mem;
 use std::panic::catch_unwind;
 use std::sync::{Arc, RwLock, Weak};
 use windows::core::Owned;
@@ -17,8 +19,8 @@ use windows::Win32::UI::WindowsAndMessaging::{
 /// the returned guard is dropped.
 pub(crate) fn register_windows_hook(
     hook: CallbackFn,
-) -> Result<WindowsHookGuard, windows::core::Error> {
-    let callback = register_callback(hook);
+) -> Result<WindowsHookGuard, Box<dyn Error>> {
+    let callback = register_callback(hook)?;
     let hook = register_hook()?;
     Ok(WindowsHookGuard((hook, callback)))
 }
@@ -27,17 +29,17 @@ pub(crate) type CallbackFn = Box<dyn Fn(CWPSTRUCT) + Send + Sync>;
 
 pub(crate) struct WindowsHookGuard(
     #[expect(dead_code, reason = "used to free resources on drop")]
-    (Arc<HookHandle>, CallbackHandle),
+    (Arc<HookHandle>, CallbackGuard),
 );
 
-static CALLBACKS: RwLock<Slab<CallbackFn>> = RwLock::new(Slab::new());
+static CALLBACKS: RwLock<Callbacks<CallbackFn>> = RwLock::new(Callbacks::new());
 
 unsafe extern "system" fn hook_proc(ncode: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     // SAFETY: lParam: A pointer to a CWPSTRUCT structure that contains details about the message.
     let data = unsafe { *(lparam.0 as *const CWPSTRUCT) };
     _ = catch_unwind(|| {
         if let Ok(callbacks) = CALLBACKS.read() {
-            for (_, callback) in callbacks.iter() {
+            for callback in callbacks.iter() {
                 callback(data);
             }
         }
@@ -77,17 +79,17 @@ unsafe impl Send for HookHandle {}
 // SAFETY: Only used to free the hook on drop.
 unsafe impl Sync for HookHandle {}
 
-fn register_callback(callback: CallbackFn) -> CallbackHandle {
+fn register_callback(callback: CallbackFn) -> Result<CallbackGuard, Box<dyn Error>> {
     let mut callbacks = CALLBACKS.write().expect("lock poisoned");
-    CallbackHandle(callbacks.insert(callback))
+    Ok(CallbackGuard(callbacks.add(callback)?))
 }
 
-struct CallbackHandle(usize);
+struct CallbackGuard(CallbackHandle);
 
-impl Drop for CallbackHandle {
+impl Drop for CallbackGuard {
     fn drop(&mut self) {
         if let Ok(mut callbacks) = CALLBACKS.write() {
-            _ = callbacks.remove(self.0);
+            callbacks.remove(mem::take(&mut self.0));
         }
     }
 }

@@ -2,13 +2,23 @@ use std::{error, fmt};
 
 /// A collection of callbacks optimized for
 /// iteration and adding while being slow on removal.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct Callbacks<T> {
     callbacks: Vec<Callback<T>>,
     next_handle: usize,
 }
 
 impl<T> Callbacks<T> {
+    pub(crate) const fn new() -> Self {
+        /// The first handle is 1 and not 0 so that
+        /// we can have an "invalid" handle that never matches anything.
+        const FIRST_HANDLE: usize = 1;
+        Self {
+            callbacks: Vec::new(),
+            next_handle: FIRST_HANDLE,
+        }
+    }
+
     pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.callbacks.iter().map(|c| &c.value)
     }
@@ -37,7 +47,7 @@ impl fmt::Display for OverflowError {
 impl error::Error for OverflowError {}
 
 /// An opaque handle used to remove a callback.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[must_use]
 pub(crate) struct CallbackHandle(usize);
 
@@ -49,18 +59,18 @@ struct Callback<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::Callbacks;
+    use super::*;
 
     #[test]
     fn adds_an_entry() {
-        let mut callbacks = Callbacks::default();
+        let mut callbacks = Callbacks::new();
         let _foo = callbacks.add("foo");
         assert_eq!(vec![&"foo"], callbacks.iter().collect::<Vec<_>>());
     }
 
     #[test]
     fn adds_multiple_entries() {
-        let mut callbacks = Callbacks::default();
+        let mut callbacks = Callbacks::new();
         let _foo = callbacks.add("foo").expect("no overflow");
         let _bar = callbacks.add("bar").expect("no overflow");
         let _baz = callbacks.add("baz").expect("no overflow");
@@ -72,7 +82,7 @@ mod tests {
 
     #[test]
     fn removes_an_entry() {
-        let mut callbacks = Callbacks::default();
+        let mut callbacks = Callbacks::new();
         let _foo = callbacks.add("foo").expect("no overflow");
         let bar = callbacks.add("bar").expect("no overflow");
         let _baz = callbacks.add("baz").expect("no overflow");
@@ -82,7 +92,7 @@ mod tests {
 
     #[test]
     fn removes_all_entry() {
-        let mut callbacks = Callbacks::default();
+        let mut callbacks = Callbacks::new();
         let foo = callbacks.add("foo").expect("no overflow");
         let bar = callbacks.add("bar").expect("no overflow");
         let baz = callbacks.add("baz").expect("no overflow");
@@ -90,5 +100,13 @@ mod tests {
         callbacks.remove(baz);
         callbacks.remove(foo);
         assert_eq!(0, callbacks.iter().count());
+    }
+
+    #[test]
+    fn default_handle_does_not_remove_first_entry() {
+        let mut callbacks = Callbacks::new();
+        let _foo = callbacks.add("foo").expect("no overflow");
+        callbacks.remove(CallbackHandle::default());
+        assert_eq!(vec![&"foo"], callbacks.iter().collect::<Vec<_>>());
     }
 }

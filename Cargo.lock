@@ -2080,7 +2080,6 @@ dependencies = [
  "objc2-app-kit 0.3.1",
  "objc2-foundation 0.3.1",
  "pin-project-lite",
- "slab",
  "static_assertions",
  "tokio",
  "wasm-bindgen",

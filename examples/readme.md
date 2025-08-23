@@ -20,3 +20,12 @@ Running the [egui](https://www.egui.rs/) example is as easy as:
 ```shell
 cargo run -p egui-example
 ```
+
+## Android
+
+The easiest way to run the examples on Android
+is to use [xbuild](https://github.com/rust-mobile/xbuild):
+
+```shell
+x run -p winit-example
+```

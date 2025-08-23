@@ -118,7 +118,9 @@ public class MundySupport {
         final TypedArray attributes = wrapper.obtainStyledAttributes(new int[]{ android.R.attr.colorAccent });
         final int index = attributes.getIndex(0);
         final int defaultValue = 0;
-        return attributes.getColor(index, defaultValue);
+        final int color = attributes.getColor(index, defaultValue);
+        attributes.recycle();
+        return color;
     }
 
     private boolean getHighTextContrastEnabled() {

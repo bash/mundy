@@ -15,8 +15,10 @@ crate-type = [
 winit = { version = "0.30.10", features = ["android-native-activity"] }
 mundy = { path = "../../", features = ["log"] }
 env_logger = "0.11.8"
-android_logger = "0.15.1"
 log = "0.4.27"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15.1"
 
 [package.metadata.android]
 build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
@@ -26,3 +28,7 @@ target_sdk_version = 33
 
 [package.metadata.android.application]
 label = "Mundy Winit Example"
+
+[[package.metadata.android.application.activities]]
+name = "android.app.NativeActivity"
+configChanges = "uiMode"

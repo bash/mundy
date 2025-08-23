@@ -4,15 +4,38 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+crate-type = [
+    "staticlib",
+    "cdylib",    # needed for Android
+    "rlib",      # rlib needed for running locally
+]
+
 [dependencies]
 bevy_color.workspace = true
-eframe = "0.32.0"
+# we disable default features because the default feature `accesskit` is not compatible with `android-native-activity`.
+eframe = { version = "0.32.1", default-features = false, features = ["android-native-activity", "default_fonts", "glow", "wayland", "web_screen_reader", "x11"] }
+
 egui-theme-switch = "0.4.0"
-egui_demo_lib = "0.32.0"
-egui_extras = "0.32.0"
+egui_demo_lib = "0.32.1"
+egui_extras = "0.32.1"
 mundy = { path = "../.." }
 log = "0.4"
+winit = { version = "0.30.12" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"
 web-sys = "0.3.4"
+
+[package.metadata.android]
+build_targets = ["armv7-linux-androideabi", "aarch64-linux-android"]
+
+[package.metadata.android.sdk]
+min_sdk_version = 23
+
+[[package.metadata.android.application.activities]]
+name = "android.app.NativeActivity"
+configChanges = "uiMode"

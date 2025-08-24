@@ -18,6 +18,10 @@
 //! A lot of this is based on the setup that the [`netwatcher`] crate uses.
 //! There's also an excellent [blog post] by crate's author, Thomas Karpiniec.
 //!
+//! ## Helpful Resources
+//! * Firefox's [GeckoSystemStateListener](https://github.com/mozilla-firefox/firefox/blob/ff058e8e75bfdd11a1bdbd1a706c3a4448bce335/mobile/android/geckoview/src/main/java/org/mozilla/gecko/GeckoSystemStateListener.java) class.
+//! * Chromium' [AccessibilityState](https://source.chromium.org/chromium/chromium/src/+/main:ui/accessibility/android/java/src/org/chromium/ui/accessibility/AccessibilityState.java;l=544;drc=057b542e8c6318874cb4ae6120a601ffdeac9c26) class.
+//!
 //! ## Caveats
 //!
 //! ### Activity re-creation

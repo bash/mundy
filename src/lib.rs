@@ -89,22 +89,54 @@ mod stream_utils;
 
 /// Contains platform-specific functionality.
 pub mod platform {
-    /// TODO: Document how to use this with ndk-context.
+    /// On Android, mundy requires access to the JVM and the current [`Context`].
+    /// To access these objects, mundy uses the [`ndk-context`] crate.
+    ///
+    /// Before calling any of mundy's functions, you need to make sure that the [`ndk-context`]
+    /// is initialized. If you are writing an Android app using pure Rust using the [`android-activity`]
+    /// or [`winit`] crates, then this is already done for you.
+    ///
+    /// If you want to listen to changes to the [`ColorScheme`], then you will also need
+    /// to call the [`crate::platform::android::on_configuration_changed`] function as needed.
+    ///
+    /// [`Context`]: https://developer.android.com/reference/android/content/Context
+    /// [`ndk-context`]: https://docs.rs/ndk-context
+    /// [`android-activity`]: https://docs.rs/android-activity
+    /// [`winit`]: https://docs.rs/winit
+    /// [`ColorScheme`]: `crate::ColorScheme`
     #[cfg(any(doc, target_os = "android"))]
     #[cfg_attr(docsrs, doc(cfg(target_os = "android")))]
     pub mod android {
         /// When certain preferences such as the [`ColorScheme`](`crate::ColorScheme`) change,
         /// Android calls the `onConfigurationChanged` method on your [`View`] or [`Activity`].
-        ///
         /// Since there is no way for mundy to override these methods itself,
-        /// you need to override `onConfigurationChanged` and call this function.
+        /// you will need to override `onConfigurationChanged` and call this function.
         ///
-        /// TODO: mention the required changes to AndroidManifest.xml, see
-        /// <https://developer.android.com/guide/topics/resources/runtime-changes#java>
-        /// <https://developer.android.com/develop/ui/views/theming/darktheme#config-changes>
+        /// To avoid your activity being re-created, you will also need to add the `android:configChanges`
+        /// attribute to your `AndroidManifest.xml`:
+        /// ```xml
+        /// <activity
+        ///    android:name=".MyActivity"
+        ///    android:configChanges="uiMode" />
+        /// ```
+        ///
+        /// This tells the OS that you handle the configuration change yourself.
+        ///
+        /// If you use a tool like [xbuild], you can also do this in your Cargo.toml:
+        /// ```toml
+        /// [[package.metadata.android.application.activities]]
+        /// name = "android.app.NativeActivity"
+        /// configChanges = "uiMode"
+        /// ```
+        ///
+        /// For more details, check out the documentation on handling [runtime changes]
+        /// and implementing [dark mode].
         ///
         /// [`View`]: https://developer.android.com/reference/kotlin/android/view/View#onconfigurationchanged
         /// [`Activity`]: https://developer.android.com/reference/android/app/Activity#onConfigurationChanged(android.content.res.Configuration)
+        /// [xbuild]: https://github.com/rust-mobile/xbuild
+        /// [runtime changes]: https://developer.android.com/guide/topics/resources/runtime-changes
+        /// [dark mode]: https://developer.android.com/develop/ui/views/theming/darktheme#config-changes
         pub fn on_configuration_changed() {
             #[cfg(target_os = "android")]
             crate::cfg::any_feature! {
@@ -288,17 +320,26 @@ impls! {
     };
 }
 
-/// The user's preference for either light or dark mode.
+/// The user's preference for either light or dark mode. This corresponds to the [`prefers-color-scheme`] CSS media feature.
 ///
-/// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme>.
+/// <details>
+/// <summary style="cursor: pointer">
 ///
-/// ## Sources
+/// #### Platform-specific Sources
+///
+/// </summary>
+///
 /// * Linux: `org.freedesktop.appearance color-scheme` from the [XDG Settings portal][xdg].
 /// * Windows: [`UISettings.GetColorValue(UIColorType::Foreground)`](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/ui/apply-windows-themes#know-when-dark-mode-is-enabled)
 /// * macOS: `NSApplication.effectiveAppearance`
 /// * Web: `@media (prefers-color-scheme: ...)`
+/// * Android: [`Configuration.uiMode`]
 ///
+/// </details>
+///
+/// [`prefers-color-scheme`]: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme
 /// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
+/// [`Configuration.uiMode`]: https://developer.android.com/reference/android/content/res/Configuration#uiMode
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[cfg(feature = "color-scheme")]
 pub enum ColorScheme {
@@ -328,17 +369,26 @@ impl ColorScheme {
     }
 }
 
-/// The user's preferred contrast level.
+/// The user's preferred contrast level. This corresponds to the [`prefers-contrast`] CSS media feature.
 ///
-/// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast>
+/// <details>
+/// <summary style="cursor: pointer">
 ///
-/// ## Sources
+/// #### Platform-specific Sources
+///
+/// </summary>
+///
 /// * Linux: `org.freedesktop.appearance contrast` from the [XDG Settings portal][xdg].
 /// * Windows: [`AccessibilitySettings.HighContrast`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.accessibilitysettings.highcontrast)
 /// * macOS: [`accessibilityDisplayShouldIncreaseContrast`](https://developer.apple.com/documentation/appkit/nsworkspace/1526290-accessibilitydisplayshouldincrea)
 /// * Web: `@media (prefers-contrast: ...)`
+/// * Android: `Settings.Secure.ACCESSIBILITY_HIGH_TEXT_CONTRAST_ENABLED` and [`UiModeManager.getContrast`]
+///
+/// </details>
 ///
 /// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
+/// [`UiModeManager.getContrast`]: https://developer.android.com/reference/android/app/UiModeManager#getContrast()
+/// [`prefers-contrast`]: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-contrast
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[cfg(feature = "contrast")]
 pub enum Contrast {
@@ -375,20 +425,29 @@ impl Contrast {
     }
 }
 
-/// The user prefers to have a minimal amount
-/// of motion. Especially motion that simulates the third dimension.
+/// The user prefers to have a minimal amount of motion. Especially motion that simulates the third dimension.
+/// This corresponds to the [`prefers-reduced-motion`] CSS media feature.
 ///
 /// Such motion can cause discomfort to people with [vestibular disorders](https://www.a11yproject.com/posts/understanding-vestibular-disorders/).
 ///
-/// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion>.
+/// <details>
+/// <summary style="cursor: pointer">
 ///
-/// ## Sources
+/// #### Platform-specific Sources
+///
+/// </summary>
+///
 /// * Linux (GNOME-only): `org.gnome.desktop.interface enable-animations` from the [XDG Settings portal][xdg].
 /// * Windows: [`UISettings.AnimationsEnabled`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.animationsenabled)
 /// * macOS: [`accessibilityDisplayShouldReduceMotion`](https://developer.apple.com/documentation/appkit/nsworkspace/1644069-accessibilitydisplayshouldreduce)
 /// * Web: `@media (prefers-reduced-motion: ...)`
+/// * Android: [`Settings.Global.ANIMATOR_DURATION_SCALE`]
+///
+/// </details>
 ///
 /// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
+/// [`Settings.Global.ANIMATOR_DURATION_SCALE`]: https://developer.android.com/reference/android/provider/Settings.Global#ANIMATOR_DURATION_SCALE
+/// [`prefers-reduced-motion`]: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[cfg(feature = "reduced-motion")]
 pub enum ReducedMotion {
@@ -413,15 +472,27 @@ impl ReducedMotion {
 }
 
 /// Indicates that applications should not use transparent or semitransparent backgrounds.
+/// This corresponds to the [`prefers-reduced-transparency`] CSS media feature.
 ///
-/// See also <https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency>.
+/// Such motion can cause discomfort to people with [vestibular disorders](https://www.a11yproject.com/posts/understanding-vestibular-disorders/).
 ///
-/// ## Sources
+/// <details>
+/// <summary style="cursor: pointer">
+///
+/// #### Platform-specific Sources
+///
+/// </summary>
+///
 /// * Windows: [`UISettings.AdvancedEffectsEnabled`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.advancedeffectsenabled)
 /// * macOS: [`accessibilityDisplayShouldReduceTransparency`](https://developer.apple.com/documentation/appkit/nsworkspace/1533006-accessibilitydisplayshouldreduce)
 /// * Web: `@media (prefers-reduced-transparency: ...)`
+/// * Linux: Unsupported
+/// * Android: Unsupported
+///
+/// </details>
 ///
 /// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
+/// [`prefers-reduced-transparency`]: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[cfg(feature = "reduced-transparency")]
 pub enum ReducedTransparency {
@@ -448,11 +519,20 @@ impl ReducedTransparency {
 
 /// The user's current system wide accent color preference.
 ///
-/// ## Sources
+/// <details>
+/// <summary style="cursor: pointer">
+///
+/// #### Platform-specific Sources
+///
+/// </summary>
+///
 /// * Linux: `org.freedesktop.appearance accent-color` from the [XDG Settings portal][xdg].
 /// * Windows: [`UISettings.GetColorValue(UIColorType::Accent)`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings)
 /// * macOS: [`NSColor.controlAccentColor`](https://developer.apple.com/documentation/appkit/nscolor/3000782-controlaccentcolor)
 /// * Web: The [`AccentColor`](https://developer.mozilla.org/en-US/docs/Web/CSS/system-color#accentcolor) system color.
+/// * Android: `android.R.attr.colorAccent`
+///
+/// </details>
 ///
 /// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -462,19 +542,24 @@ pub struct AccentColor(pub Option<Srgba>);
 /// The maximum amount of time that may occur between the first and second click
 /// event for it to count as double click.
 ///
-/// A typical value for this setting is ~500 ms.
+/// A typical value for this preference is ~500 ms.
 ///
-/// ## Sources
+/// <details>
+/// <summary style="cursor: pointer">
+///
+/// #### Platform-specific Sources
+///
+/// </summary>
+///
 /// * Linux (GNOME-only): `org.gnome.desktop.peripherals.mouse double-click` from the [XDG Settings portal][xdg].
 /// * Windows: [`GetDoubleClickTime`](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdoubleclicktime)
 /// * macOS: [`NSEvent.doubleClickInterval`](https://developer.apple.com/documentation/appkit/nsevent/1528384-doubleclickinterval)
 /// * Web: Unsupported
+/// * Android: Unsupported
+///
+/// </details>
 ///
 /// [xdg]: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.impl.portal.Settings.html
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[cfg(feature = "double-click-interval")]
 pub struct DoubleClickInterval(pub Option<std::time::Duration>);
-
-// TODO: Windows also has a double click size:
-// https://github.com/dotnet/winforms/blob/7376e50c5a762131398992def2e76f4586fe5025/src/System.Windows.Forms/src/System/Windows/Forms/SystemInformation.cs#L263
-// https://github.com/dotnet/winforms/blob/7376e50c5a762131398992def2e76f4586fe5025/src/System.Windows.Forms/src/System/Windows/Forms/SystemInformation.cs#L263

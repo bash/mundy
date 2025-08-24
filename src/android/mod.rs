@@ -11,7 +11,7 @@
 //! The [`ndk_context`] crate works with both apps written in Rust and apps
 //! written in Java/Kotlin that call into Rust.
 //!
-//! The facilitate interacting with the Java APIs, we have some glue code
+//! To facilitate interacting with the Java APIs, we have some glue code
 //! written in Java, that gets compiled to DEX bytecode in our `build.rs`
 //! and then injected at runtime in the [`support`] module.
 //!
@@ -22,9 +22,7 @@
 //!
 //! ### Activity re-creation
 //! Certain actions on Android, such as changing the system theme (accent color, etc.)
-//! results in the activity being destroyed and re-created.
-//!
-//! TODO: do we need to be informed about activity re-creation for java/kotlin apps?
+//! always result in the activity being destroyed and re-created.
 //!
 //! For applications written using [`NativeActivity`] this means that
 //! `android_main` is expected to return after receiving a [`Destroy`] event. It is then called again with
@@ -68,8 +66,6 @@ use pin_project_lite::pin_project;
 use result::Result;
 use std::time::Duration;
 use support::{java_vm, JavaSupport};
-
-// signatures: <https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/types.html>
 
 mod result;
 mod subscription;

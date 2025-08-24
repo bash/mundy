@@ -18,9 +18,8 @@ import java.lang.Override;
 import java.util.concurrent.Executor;
 
 /**
- * Support class enabling the Rust crate netwatcher to monitor network interface changes,
- * functionality which is not available in the NDK. This class will be instantiated automatically
- * via JNI and should not be used directly.
+ * Support class enabling the Rust crate mundy to access functionality which is not available in the NDK.
+ * This class will be instantiated automatically via JNI and should not be used directly.
  */
 public class MundySupport {
     private static final String TAG = "MundySupport";

@@ -1,4 +1,12 @@
 # Changelog
+## 0.2.0
+* Added support for Android.
+* The MSRV was previously not explicitly defined.
+  It is now set to `1.80.0`.
+* Removes conversions from `Srgba` to bevy and epaint color types.
+* Add convenience methods on the preference enums
+  for easy testing such as `is_dark`, `is_light`, etc.
+
 ## 0.1.10
 * Add `Preferences::once_blocking` - an easy way to retrieve the preferences once. #5
 * Update `epaint` from 0.31 to 0.32

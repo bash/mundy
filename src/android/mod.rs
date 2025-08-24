@@ -159,7 +159,7 @@ fn try_get_preferences(interest: Interest) -> Result<AvailablePreferences> {
         preferences.reduced_motion = get_reduced_motion(&support, &mut env).unwrap_or_default();
     }
 
-    #[cfg(feature = "reduced-motion")]
+    #[cfg(feature = "accent-color")]
     if interest.is(Interest::AccentColor) {
         preferences.accent_color = get_accent_color(&support, &mut env).unwrap_or_default();
     }
@@ -194,7 +194,7 @@ fn get_reduced_motion(support: &JavaSupport, env: &mut JNIEnv) -> Result<Reduced
     }
 }
 
-#[cfg(feature = "reduced-motion")]
+#[cfg(feature = "accent-color")]
 fn get_accent_color(support: &JavaSupport, env: &mut JNIEnv) -> Result<AccentColor> {
     let color = support.get_accent_color(env)? as u32;
     // Color ints in Android APIs always define colors in the

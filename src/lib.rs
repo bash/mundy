@@ -474,8 +474,6 @@ impl ReducedMotion {
 /// Indicates that applications should not use transparent or semitransparent backgrounds.
 /// This corresponds to the [`prefers-reduced-transparency`] CSS media feature.
 ///
-/// Such motion can cause discomfort to people with [vestibular disorders](https://www.a11yproject.com/posts/understanding-vestibular-disorders/).
-///
 /// <details>
 /// <summary style="cursor: pointer">
 ///

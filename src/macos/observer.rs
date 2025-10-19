@@ -6,8 +6,6 @@ use super::get_contrast;
 use super::get_reduced_motion;
 #[cfg(feature = "reduced-transparency")]
 use super::get_reduced_transparency;
-#[cfg(feature = "_macos-accessibility")]
-use super::get_shared_workspace;
 #[cfg(feature = "color-scheme")]
 use super::main_thread::run_on_main_async;
 #[cfg(feature = "_macos-accessibility")]
@@ -28,6 +26,8 @@ use objc2_app_kit::NSAppearance;
 use objc2_app_kit::NSApplication;
 #[cfg(feature = "accent-color")]
 use objc2_app_kit::NSSystemColorsDidChangeNotification;
+#[cfg(feature = "_macos-accessibility")]
+use objc2_app_kit::NSWorkspace;
 #[cfg(feature = "_macos-accessibility")]
 use objc2_app_kit::NSWorkspaceAccessibilityDisplayOptionsDidChangeNotification;
 #[cfg(feature = "accent-color")]
@@ -77,7 +77,7 @@ impl Observer {
 
         #[cfg(feature = "_macos-accessibility")]
         if interest.is(Interest::MacOSAccessibility) {
-            let workspace = get_shared_workspace();
+            let workspace = NSWorkspace::sharedWorkspace();
             let notification_center = workspace.notificationCenter();
             // SAFETY: The observer is removed on drop.
             unsafe {
@@ -135,7 +135,7 @@ impl Drop for ObserverRegistration {
 
         #[cfg(feature = "_macos-accessibility")]
         if self.interest.is(Interest::MacOSAccessibility) {
-            let workspace = get_shared_workspace();
+            let workspace = NSWorkspace::sharedWorkspace();
             let notification_center = workspace.notificationCenter();
             unsafe {
                 notification_center.removeObserver(&self.observer);

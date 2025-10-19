@@ -18,8 +18,6 @@ use crate::{AvailablePreferences, Interest};
 #[cfg(feature = "_macos-observable")]
 use futures_channel::mpsc;
 use futures_lite::{stream, Stream, StreamExt as _};
-#[cfg(feature = "_macos-accessibility")]
-use objc2::rc::Retained;
 use objc2_app_kit::NSApplication;
 #[cfg(feature = "double-click-interval")]
 use objc2_app_kit::NSEvent;

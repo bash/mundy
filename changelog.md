@@ -1,4 +1,7 @@
 # Changelog
+## 0.2.1
+* Updated `windows` to 0.62
+
 ## 0.2.0
 * Added support for Android.
 * The MSRV was previously not explicitly defined.

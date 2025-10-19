@@ -22,9 +22,9 @@ futures-channel = { version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = "0.6.0"
-objc2-app-kit = { version = "0.3.0", features = ["NSApplication", "NSResponder"] }
-objc2-foundation = { version = "0.3.0", features = ["NSThread", "NSObject", "NSString"] }
+objc2 = "0.6.3"
+objc2-app-kit = { version = "0.3.2", features = ["NSApplication", "NSResponder"] }
+objc2-foundation = { version = "0.3.2", features = ["NSThread", "NSObject", "NSString"] }
 futures-channel = { version = "0.3", optional = true }
 dispatch = { version = "0.2", optional = true }
 

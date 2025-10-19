@@ -29,7 +29,7 @@ futures-channel = { version = "0.3", optional = true }
 dispatch = { version = "0.2", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.61.1", features = ["Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
+windows = { version = "0.62.2", features = ["Win32_UI_WindowsAndMessaging", "Win32_System_Threading"] }
 futures-channel = "0.3"
 
 [target.'cfg(target_os = "linux")'.dependencies]
@@ -98,9 +98,7 @@ _macos-accessibility = [
 ]
 _macos-observable = ["dep:futures-channel"]
 _gnome_only = []
-# the deprecated feature is here as a workaround for <https://github.com/microsoft/windows-rs/issues/3425>
-# FIXME: remove workaround when updating windows
-_winrt = ["windows/UI_ViewManagement", "windows/Win32_System_Com", "windows/deprecated"]
+_winrt = ["windows/UI_ViewManagement", "windows/Win32_System_Com"]
 
 [workspace]
 resolver = "2"

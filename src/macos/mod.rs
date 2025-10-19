@@ -167,17 +167,6 @@ fn get_preferences(
     preferences
 }
 
-#[cfg(feature = "_macos-accessibility")]
-fn get_shared_workspace() -> Retained<NSWorkspace> {
-    // SAFETY:
-    // * `sharedWorkspace` is safe to access from any thread.
-    //    Source: <https://developer.apple.com/documentation/appkit/nsworkspace/1530344-sharedworkspace>
-    // * Doesn't take any raw pointers.
-    // * Has no documented preconditions.
-    // * Has no documented exceptions.
-    unsafe { NSWorkspace::sharedWorkspace() }
-}
-
 #[cfg(feature = "color-scheme")]
 fn to_color_scheme(appearance: &NSAppearance) -> ColorScheme {
     let light = unsafe { NSAppearanceNameAqua };
@@ -193,9 +182,8 @@ fn to_color_scheme(appearance: &NSAppearance) -> ColorScheme {
 
 #[cfg(feature = "contrast")]
 fn get_contrast() -> Contrast {
-    let workspace = get_shared_workspace();
-    // SAFETY: Similar as for `get_shared_workspace()`.
-    let increase_contrast = unsafe { workspace.accessibilityDisplayShouldIncreaseContrast() };
+    let workspace = NSWorkspace::sharedWorkspace();
+    let increase_contrast = workspace.accessibilityDisplayShouldIncreaseContrast();
     if increase_contrast {
         Contrast::More
     } else {
@@ -205,9 +193,8 @@ fn get_contrast() -> Contrast {
 
 #[cfg(feature = "reduced-motion")]
 fn get_reduced_motion() -> ReducedMotion {
-    let workspace = get_shared_workspace();
-    // SAFETY: Similar as for `get_shared_workspace()`.
-    let reduce_motion = unsafe { workspace.accessibilityDisplayShouldReduceMotion() };
+    let workspace = NSWorkspace::sharedWorkspace();
+    let reduce_motion = workspace.accessibilityDisplayShouldReduceMotion();
     if reduce_motion {
         ReducedMotion::Reduce
     } else {
@@ -217,9 +204,8 @@ fn get_reduced_motion() -> ReducedMotion {
 
 #[cfg(feature = "reduced-transparency")]
 fn get_reduced_transparency() -> ReducedTransparency {
-    let workspace = get_shared_workspace();
-    // SAFETY: Similar as for `get_shared_workspace()`.
-    let reduce_motion = unsafe { workspace.accessibilityDisplayShouldReduceTransparency() };
+    let workspace = NSWorkspace::sharedWorkspace();
+    let reduce_motion = workspace.accessibilityDisplayShouldReduceTransparency();
     if reduce_motion {
         ReducedTransparency::Reduce
     } else {
@@ -229,26 +215,26 @@ fn get_reduced_transparency() -> ReducedTransparency {
 
 #[cfg(feature = "accent-color")]
 fn get_accent_color() -> AccentColor {
-    let color = unsafe { NSColor::controlAccentColor() };
+    let color = NSColor::controlAccentColor();
     AccentColor(to_srgb(&color))
 }
 
 #[cfg(feature = "accent-color")]
 fn to_srgb(color: &NSColor) -> Option<Srgba> {
-    let srgb = unsafe { NSColorSpace::sRGBColorSpace() };
-    let color_in_srgb = unsafe { color.colorUsingColorSpace(&srgb) }?;
+    let srgb = NSColorSpace::sRGBColorSpace();
+    let color_in_srgb = color.colorUsingColorSpace(&srgb)?;
     // We have to cast because on 32-bit platforms, `CGFloat` = f32.
     Some(Srgba {
-        red: unsafe { color_in_srgb.redComponent() } as _,
-        green: unsafe { color_in_srgb.greenComponent() } as _,
-        blue: unsafe { color_in_srgb.blueComponent() } as _,
-        alpha: unsafe { color_in_srgb.alphaComponent() } as _,
+        red: color_in_srgb.redComponent() as _,
+        green: color_in_srgb.greenComponent() as _,
+        blue: color_in_srgb.blueComponent() as _,
+        alpha: color_in_srgb.alphaComponent() as _,
     })
 }
 
 #[cfg(feature = "double-click-interval")]
 fn get_double_click_interval() -> DoubleClickInterval {
     // NSTimeInterval: A number of seconds.
-    let interval = unsafe { NSEvent::doubleClickInterval() };
+    let interval = NSEvent::doubleClickInterval();
     DoubleClickInterval(Duration::try_from_secs_f64(interval).ok())
 }

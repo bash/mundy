@@ -78,8 +78,7 @@ impl Observer {
         #[cfg(feature = "_macos-accessibility")]
         if interest.is(Interest::MacOSAccessibility) {
             let workspace = get_shared_workspace();
-            // SAFETY: Similar as for `get_shared_workspace()`.
-            let notification_center = unsafe { workspace.notificationCenter() };
+            let notification_center = workspace.notificationCenter();
             // SAFETY: The observer is removed on drop.
             unsafe {
                 notification_center.addObserver_selector_name_object(
@@ -137,8 +136,7 @@ impl Drop for ObserverRegistration {
         #[cfg(feature = "_macos-accessibility")]
         if self.interest.is(Interest::MacOSAccessibility) {
             let workspace = get_shared_workspace();
-            // SAFETY: Similar as for `get_shared_workspace()`.
-            let notification_center = unsafe { workspace.notificationCenter() };
+            let notification_center = workspace.notificationCenter();
             unsafe {
                 notification_center.removeObserver(&self.observer);
             }

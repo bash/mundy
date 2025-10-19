@@ -14,11 +14,11 @@ crate-type = [
 [dependencies]
 bevy_color.workspace = true
 # we disable default features because the default feature `accesskit` is not compatible with `android-native-activity`.
-eframe = { version = "0.32.1", default-features = false, features = ["android-native-activity", "default_fonts", "glow", "wayland", "web_screen_reader", "x11"] }
+eframe = { version = "0.33.0", default-features = false, features = ["android-native-activity", "default_fonts", "glow", "wayland", "web_screen_reader", "x11"] }
 
-egui-theme-switch = "0.4.0"
-egui_demo_lib = "0.32.1"
-egui_extras = "0.32.1"
+egui-theme-switch = "0.5.0"
+egui_demo_lib = "0.33.0"
+egui_extras = "0.33.0"
 mundy = { path = "../.." }
 log = "0.4"
 winit = { version = "0.30.12" }

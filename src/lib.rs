@@ -437,7 +437,7 @@ impl Contrast {
 ///
 /// </summary>
 ///
-/// * Linux (GNOME-only): `org.gnome.desktop.interface enable-animations` from the [XDG Settings portal][xdg].
+/// * Linux: `org.freedesktop.appearance reduced-motion` from the [XDG Settings portal][xdg].
 /// * Windows: [`UISettings.AnimationsEnabled`](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.animationsenabled)
 /// * macOS: [`accessibilityDisplayShouldReduceMotion`](https://developer.apple.com/documentation/appkit/nsworkspace/1644069-accessibilitydisplayshouldreduce)
 /// * Web: `@media (prefers-reduced-motion: ...)`

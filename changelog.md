@@ -1,4 +1,7 @@
 # Changelog
+## 0.2.2
+* Added support for the new `reduced-motion` preference from the [XDG Settings portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Settings.html).
+
 ## 0.2.1
 * Updated `windows` to 0.62
 

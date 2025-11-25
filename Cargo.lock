@@ -1949,7 +1949,7 @@ dependencies = [
 
 [[package]]
 name = "mundy"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "android-build",
  "async-io",

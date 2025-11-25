@@ -60,6 +60,8 @@ const CONTRAST: &str = "contrast";
 const ACCENT_COLOR: &str = "accent-color";
 #[cfg(feature = "reduced-motion")]
 const ENABLE_ANIMATIONS: &str = "enable-animations";
+#[cfg(feature = "reduced-motion")]
+const REDUCED_MOTION: &str = "reduced-motion";
 
 pub(crate) type PreferencesStream = stream::Boxed<AvailablePreferences>;
 
@@ -90,42 +92,45 @@ cfg_if! {
 }
 
 fn preferences_stream(interest: Interest) -> impl Stream<Item = AvailablePreferences> {
-    stream::once_future(subscribe(interest)).flat_map(move |(preferences, stream)| {
+    stream::once_future(subscribe(interest)).flat_map(move |(state, preferences, stream)| {
         let initial_value = stream::once(preferences);
         let stream = stream.map(Left).unwrap_or_else(|| Right(stream::empty()));
-        initial_value.chain(changes(interest, preferences, stream))
+        initial_value.chain(changes(interest, state, preferences, stream))
     })
 }
 
 fn changes(
     interest: Interest,
+    state: State,
     preferences: AvailablePreferences,
     stream: impl Stream<Item = Message>,
 ) -> impl Stream<Item = AvailablePreferences> {
     Scan::new(
         stream,
-        preferences,
-        move |mut preferences, message| async move {
-            if let Err(err) = apply_message(interest, &mut preferences, message).await {
+        (state, preferences),
+        move |(mut state, mut preferences), message| async move {
+            if let Err(err) = apply_message(interest, &mut state, &mut preferences, message).await {
                 log_message_error(&err);
             }
-            Some((preferences, preferences))
+            Some(((state, preferences), preferences))
         },
     )
 }
 
-async fn subscribe(interest: Interest) -> (AvailablePreferences, Option<SignalStream<'static>>) {
+async fn subscribe(
+    interest: Interest,
+) -> (State, AvailablePreferences, Option<SignalStream<'static>>) {
     match connect().await {
         Ok(proxy) => {
             let stream = setting_changed(&proxy, interest)
                 .await
                 .inspect_err(log_dbus_connection_error)
                 .ok();
-            let preferences = initial_preferences(&proxy, interest)
+            let (state, preferences) = initial_preferences(&proxy, interest)
                 .await
                 .inspect_err(log_initial_settings_retrieval_error)
                 .unwrap_or_default();
-            (preferences, stream)
+            (state, preferences, stream)
         }
         Err(err) => {
             log_dbus_connection_error(&err);
@@ -141,6 +146,7 @@ async fn connect() -> zbus::Result<Proxy<'static>> {
 
 async fn apply_message(
     interest: Interest,
+    _state: &mut State,
     preferences: &mut AvailablePreferences,
     message: Message,
 ) -> Result<(), zbus::Error> {
@@ -156,7 +162,14 @@ async fn apply_message(
             preferences.contrast = parse_contrast(value);
         }
         #[cfg(feature = "reduced-motion")]
-        (GNOME_INTERFACE, ENABLE_ANIMATIONS) if interest.is(Interest::ReducedMotion) => {
+        (APPEARANCE, REDUCED_MOTION) if interest.is(Interest::ReducedMotion) => {
+            _state.has_reduced_motion_setting = true;
+            preferences.reduced_motion = parse_reduced_motion(value);
+        }
+        #[cfg(feature = "reduced-motion")]
+        (GNOME_INTERFACE, ENABLE_ANIMATIONS)
+            if interest.is(Interest::ReducedMotion) && !_state.has_reduced_motion_setting =>
+        {
             preferences.reduced_motion = parse_enable_animation(value);
         }
         #[cfg(feature = "accent-color")]
@@ -175,8 +188,9 @@ async fn apply_message(
 async fn initial_preferences(
     proxy: &Proxy<'_>,
     interest: Interest,
-) -> zbus::Result<AvailablePreferences> {
+) -> zbus::Result<(State, AvailablePreferences)> {
     let mut preferences = AvailablePreferences::default();
+    let mut _state = State::default();
     #[cfg(feature = "color-scheme")]
     if interest.is(Interest::ColorScheme) {
         preferences.color_scheme = read_setting(proxy, APPEARANCE, COLOR_SCHEME)
@@ -193,11 +207,17 @@ async fn initial_preferences(
     }
     #[cfg(feature = "reduced-motion")]
     if interest.is(Interest::ReducedMotion) {
-        // Ideally this would be something that xdg-desktop-portal gives us.
-        preferences.reduced_motion = read_setting(proxy, GNOME_INTERFACE, ENABLE_ANIMATIONS)
-            .await
-            .map(parse_enable_animation)
-            .unwrap_or_default();
+        let reduced_motion_value = read_setting(proxy, APPEARANCE, REDUCED_MOTION).await;
+        if let Some(reduced_motion_value) = reduced_motion_value {
+            _state.has_reduced_motion_setting = true;
+            preferences.reduced_motion = parse_reduced_motion(reduced_motion_value);
+        } else {
+            // Fallback until the portal preference is widely supported.
+            preferences.reduced_motion = read_setting(proxy, GNOME_INTERFACE, ENABLE_ANIMATIONS)
+                .await
+                .map(parse_enable_animation)
+                .unwrap_or_default();
+        }
     }
     #[cfg(feature = "accent-color")]
     if interest.is(Interest::AccentColor) {
@@ -214,7 +234,7 @@ async fn initial_preferences(
                 .map(parse_double_click)
                 .unwrap_or_default();
     }
-    Ok(preferences)
+    Ok((_state, preferences))
 }
 
 async fn settings_proxy<'a>(connection: &Connection) -> zbus::Result<Proxy<'a>> {
@@ -308,6 +328,17 @@ fn parse_accent_color(value: Value) -> AccentColor {
 }
 
 #[cfg(feature = "reduced-motion")]
+fn parse_reduced_motion(value: Value) -> ReducedMotion {
+    match u32::try_from(value) {
+        // > `1`: Reduced motion
+        Ok(1) => ReducedMotion::Reduce,
+        // > `0`: No preference
+        // > Unknown values should be treated as `0` (no preference).
+        Ok(0) | Ok(_) | Err(_) => ReducedMotion::NoPreference,
+    }
+}
+
+#[cfg(feature = "reduced-motion")]
 fn parse_enable_animation(value: Value) -> ReducedMotion {
     match bool::try_from(value) {
         Ok(false) => ReducedMotion::Reduce,
@@ -325,4 +356,10 @@ fn parse_double_click(value: Value) -> DoubleClickInterval {
         .and_then(|v| u64::try_from(v).ok())
         .map(Duration::from_millis);
     DoubleClickInterval(value)
+}
+
+#[derive(Debug, Default)]
+struct State {
+    #[cfg(feature = "reduced-motion")]
+    has_reduced_motion_setting: bool,
 }
